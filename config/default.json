@@ -1,0 +1,16 @@
+{
+  "port": "3001",
+  "envVariables": {
+    "dev": "development",
+    "staging": "staging",
+    "prod": "production",
+    "test": "test"
+  },
+  "tokenVariable": "x-auth-token",
+  "projectName": "cartradez",
+  "locale": "NEXTJS_LOCALE",
+  "awakeJobFrequencyInMinutes": "10",
+  "windowSizeInMinutes": 1,
+  "maxRequestsAllowed": 30,
+  "socket": "socketIo"
+}

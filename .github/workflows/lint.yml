@@ -1,0 +1,49 @@
+name: Lint & Format
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  lint:
+    name: Run ESLint and Prettier
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Get staged files
+        id: staged_files
+        run: |
+          git diff --name-only --cached > staged-files.txt
+          cat staged-files.txt
+
+      - name: Run ESLint on staged files
+        run: |
+          if [ -s staged-files.txt ]; then
+            npx eslint $(cat staged-files.txt) --fix
+          else
+            echo "No staged files to lint."
+          fi
+
+      - name: Run Prettier on staged files
+        run: |
+          if [ -s staged-files.txt ]; then
+            npx prettier --write $(cat staged-files.txt)
+          else
+            echo "No staged files to format."
+          fi
