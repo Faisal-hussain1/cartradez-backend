@@ -1,14 +1,14 @@
 const {MongosFactory} = require('../factories');
-const OrganizationsModel = require('../models/OrganizationsModel');
-const UsersModel = require('../models/UsersModel');
+const {OrganizationsModel, UsersModel} = require('../models');
 const {passwordsUtils} = require('../utils');
 const {asyncTryCatch} = require('../utils/tryCatchUtils');
 
 module.exports = class UsersServices {
-  static async getUserByEmail({email, optionsInclude}) {
+  static async getUserByEmail({email, isPasswordRequired = false}) {
     const options = {
-      fieldsInclusion: {include: optionsInclude},
+      fieldsInclusion: {include: !isPasswordRequired ? [] : ['password']},
     };
+
     const query = {email: email.toLowerCase()};
 
     const {
@@ -24,7 +24,7 @@ module.exports = class UsersServices {
     return {success, user, error};
   }
 
-  static async getUserById({_id}) {
+  static async getUserById({_id, session}) {
     const query = {_id};
 
     const {
@@ -34,21 +34,17 @@ module.exports = class UsersServices {
     } = await MongosFactory.findOne({
       model: UsersModel,
       query,
+      session,
     });
 
     return {success, user, error};
   }
 
-  static async createUser({data, session, optionsInclude}) {
-    const options = {
-      fieldsInclusion: {include: optionsInclude},
-    };
-
+  static async createUser({data, session}) {
     const {doc, error, success} = await MongosFactory.create({
       model: UsersModel,
       data,
       session,
-      options,
     });
 
     return {success, user: doc, error};
@@ -65,17 +61,17 @@ module.exports = class UsersServices {
   }
 
   static async verifyUserPassword({inputPassword, dbPassword}) {
-    const {success, response, error} = await asyncTryCatch({
-      fn: async () => await passwordsUtils.verify({inputPassword, dbPassword}),
-    });
+    const {success, response, error} = await asyncTryCatch(
+      async () => await passwordsUtils.verify({inputPassword, dbPassword})
+    );
 
     return {success, isPasswordVerified: response, error};
   }
 
   static async resetPassword({resetArgs: {email, newPassword, token}}) {
-    const {response: password} = await asyncTryCatch({
-      fn: async () => passwordsUtils.saltHashPassword({password: newPassword}),
-    });
+    const {response: password} = await asyncTryCatch(async () =>
+      passwordsUtils.saltHashPassword({password: newPassword})
+    );
 
     const query = {email, loginResetToken: token};
     const update = {password, $unset: {loginResetToken: 1}};
@@ -88,35 +84,6 @@ module.exports = class UsersServices {
       });
 
     return {success, error, isDocumentUpdated, responseObj};
-  }
-
-  static async setPermissions({
-    permissionArgs: {userId, permissions},
-    session,
-  }) {
-    const query = {_id: userId};
-    const update = {};
-
-    const addPermission = ({entityType, entityId, accessLevelsToSet}) => {
-      update[`${entityType}.${entityId}`] = accessLevelsToSet;
-    };
-
-    if (Array.isArray(permissions)) permissions.forEach(addPermission);
-    else addPermission(permissions);
-
-    const {
-      success,
-      doc: user,
-      error,
-      isDocumentUpdated,
-    } = await MongosFactory.findOneAndUpdate({
-      model: UsersModel,
-      query,
-      data: update,
-      session,
-    });
-
-    return {success, user, error, isDocumentUpdated};
   }
 
   static async removePermissions({mapKey}) {
@@ -145,18 +112,5 @@ module.exports = class UsersServices {
       });
 
     return {error, isDocumentUpdated, responseObj, success};
-  }
-
-  static async updateUserLanguage({updateArgs: {userId, language}}) {
-    const query = {_id: userId};
-    const update = {language};
-
-    const {success, error} = await MongosFactory.updateOne({
-      model: UsersModel,
-      query,
-      data: update,
-    });
-
-    return {success, error};
   }
 };

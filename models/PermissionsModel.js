@@ -23,7 +23,7 @@ const userAccessLevelSchema = new Schema(
   {_id: false}
 );
 
-const entitiesAccessLevelSchema = new Schema(
+const productsAccessLevelSchema = new Schema(
   {
     view: {
       type: [String],
@@ -40,7 +40,7 @@ const entitiesAccessLevelSchema = new Schema(
 const levelsSchema = new Schema(
   {
     users: userAccessLevelSchema,
-    entities: entitiesAccessLevelSchema,
+    products: productsAccessLevelSchema,
 
     // You can add more modules/resources here
     // e.g. companies: companyAccessLevelSchema,
