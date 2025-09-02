@@ -23,3 +23,12 @@ module.exports.mongooseIdValidate = ({name}) => {
       test: (value) => (value ? mongoose.Types.ObjectId.isValid(value) : true),
     });
 };
+
+module.exports.checkAllowedRoles =
+  ({allowedRoles}) =>
+  async ({req}) => {
+    if (!req.jwtToken.user) return false;
+    const {role} = req.jwtToken.user.currentActiveOrganization;
+
+    return allowedRoles.includes(role);
+  };

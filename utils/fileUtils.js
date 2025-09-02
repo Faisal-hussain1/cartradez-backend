@@ -19,15 +19,13 @@ const client = new S3Client({
   credentials: {accessKeyId, secretAccessKey},
 });
 
-module.exports.uploadFile = async ({file, fileDir}) => {
+module.exports.uploadFile = async ({filePath, file, fileName}) => {
   try {
-    const fileName = file.originalname;
-
     const upload = new Upload({
       client,
       params: {
         Bucket,
-        Key: `${fileDir}/${fileName}`,
+        Key: filePath,
         Body: file.buffer,
       },
     });
