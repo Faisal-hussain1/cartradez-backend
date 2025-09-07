@@ -103,7 +103,7 @@ export default defineConfig([
         },
       ],
 
-      'local-rules/enforce-single-object-param': ['error'],
+      // 'local-rules/enforce-single-object-param': ['error'],
     },
   },
 

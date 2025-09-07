@@ -38,7 +38,6 @@ module.exports = class UsersController {
         await UsersServices.createUser({
           data,
           session,
-          optionsInclude: ['organizations'],
         });
 
       if (userCreationError) throw userCreationError;
@@ -66,13 +65,13 @@ module.exports = class UsersController {
             organizationId,
             levels: {
               users: {
-                view: [accessConstants.ACCESS_LEVELS.all],
-                update: [accessConstants.ACCESS_LEVELS.all],
+                view: [accessConstants.ACCESS_LEVELS.none],
+                update: [accessConstants.ACCESS_LEVELS.none],
               },
-              entities: {
+              products: {
                 view: [accessConstants.ACCESS_LEVELS.all],
-                update: [accessConstants.ACCESS_LEVELS.all],
-                remove: [accessConstants.ACCESS_LEVELS.all],
+                update: [],
+                remove: [accessConstants.ACCESS_LEVELS.none],
               },
             },
           },
@@ -84,16 +83,16 @@ module.exports = class UsersController {
       createdUser.organizations.push({
         organizationId,
         permissions: permissions._id,
-        role: usersConstants.SYSTEM_ROLES.admin.value,
+        role: usersConstants.SYSTEM_ROLES.user.value,
         isActive: true,
       });
 
       await createdUser.save({session});
 
-      await actions.users.verifyUser({
-        user: createdUser,
-        locale: getLocaleFromCookie({req}),
-      });
+      // await actions.users.verifyUser({
+      //   user: createdUser,
+      //   locale: getLocaleFromCookie({req}),
+      // });
 
       await session.commitTransaction();
 
@@ -246,7 +245,7 @@ module.exports = class UsersController {
       error,
     } = await UsersServices.getUserByEmail({
       email: inputData.email,
-      optionsInclude: ['password', 'organizations'],
+      isPasswordRequired: true,
     });
 
     if (!isSuccessful) throw error;

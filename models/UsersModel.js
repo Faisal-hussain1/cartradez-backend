@@ -1,69 +1,53 @@
 const mongoose = require('mongoose');
 
+const {generalConstant, usersConstants} = require('../constants');
+const {jwtUtils, passwordsUtils} = require('../utils');
+
 const {
   softDeleteWithIndexesPlugin,
-  hashPasswordPlugin,
-  showFieldsPlugin,
+  hideTimestampsPlugin,
 } = require('./plugins');
 
-const {generalConstant, usersConstants} = require('../constants');
-const {jwtUtils} = require('../utils');
-
-const {Schema} = mongoose;
-
-const organizationsSchema = new Schema(
-  {
-    permissions: {type: Schema.Types.ObjectId, ref: 'Permissions'},
-    organizationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organizations',
-    },
-    role: {
-      type: String,
-      enum: usersConstants.SYSTEM_ROLES_VALUES,
-    },
-    isActive: {type: Boolean},
-  },
-  {_id: false}
-);
+const Schema = mongoose.Schema;
 
 const usersSchema = new Schema(
   {
-    firstName: {
+    firstName: {type: String, required: [true, 'User must have a first name']},
+    lastName: {type: String, required: [true, 'User must have a last name']},
+    phoneNumber: {
       type: String,
-    },
-    lastName: {
-      type: String,
+      required: true,
     },
     email: {
       type: String,
       required: [true, 'User must have a email'],
       minlength: 4,
       maxlength: 255,
-      lowercase: true,
     },
     password: {
       type: String,
-      minlength: 6,
+      required: [true, 'User must have a password'],
+      minlength: 8,
       maxlength: 2048,
+      select: false,
     },
     organizations: [
       {
-        type: organizationsSchema,
+        permissions: {type: Schema.Types.ObjectId, ref: 'Permissions'},
+        organizationId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Organizations',
+        },
+        role: {
+          type: String,
+          enum: usersConstants.SYSTEM_ROLES_VALUES,
+        },
+        isActive: {type: Boolean},
       },
     ],
-    role: {
-      type: String,
-      enum: usersConstants.SYSTEM_ROLES_VALUES,
-    },
-    language: {
-      type: String,
-      enum: usersConstants.LANGUAGES_VALUES,
-      default: usersConstants.DEFAULT_LANGUAGE,
-    },
-    isVerified: {type: Boolean, default: false},
+
+    isVerified: {type: Boolean, default: true},
     verificationToken: {type: String},
-    invitationToken: {type: String},
     loginResetToken: {type: String},
     deletedAt: {
       type: Date,
@@ -79,18 +63,27 @@ const usersSchema = new Schema(
   }
 );
 
-usersSchema.plugin(showFieldsPlugin, {
-  fieldsToShow: ['firstName', 'lastName', 'email', 'isVerified', 'language'], // only these will be shown by default
-}); // Whenever you need to get the currentActiveOrganization to show, then you just need to make sure that the organizations is included in the include fields options. Organizations are not selected by default, so that affect the currentActiveOrganization and they show or hide together
+// Use the hide timestamps plugin
+usersSchema.plugin(hideTimestampsPlugin);
 
 // Use the soft delete plugin
-usersSchema.plugin(softDeleteWithIndexesPlugin, {uniqueFields: ['email']});
-
-// This plugin will hash the password before saving the user
-usersSchema.plugin(hashPasswordPlugin);
+usersSchema.plugin(softDeleteWithIndexesPlugin, {
+  uniqueFields: ['email'],
+});
 
 usersSchema.virtual('currentActiveOrganization').get(function () {
   return this?.organizations?.find((org) => org.isActive) || null;
+});
+
+usersSchema.pre('save', async function (next) {
+  // Only run this function if password was actually modified
+  if (!this.isModified('password')) return next();
+
+  // Hash the password
+  this.password = await passwordsUtils.saltHashPassword({
+    password: this.password,
+  });
+  next();
 });
 
 usersSchema.methods = {
@@ -111,19 +104,6 @@ usersSchema.methods = {
     this.verificationToken = verificationToken;
 
     return verificationToken;
-  },
-  generateInvitationToken: function () {
-    const payload = {_id: this._id, email: this.email};
-    const expiry = generalConstant.userInvitationTokenExpiry;
-
-    const invitationToken = jwtUtils.generateToken({
-      payload,
-      expiry,
-    });
-
-    this.invitationToken = invitationToken;
-
-    return invitationToken;
   },
 };
 

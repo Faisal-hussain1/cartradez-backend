@@ -23,6 +23,7 @@ const commonAuthSchema = {
     ),
   firstName: Yup.string().min(1).max(255).required('First name is required'),
   lastName: Yup.string().min(1).max(255).required('Last name is required'),
+  phoneNumber: Yup.string().min(12).required('Phone number is required'),
 };
 
 module.exports.validateCreateRequest = ({data: user}) => {

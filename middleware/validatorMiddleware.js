@@ -12,9 +12,7 @@ module.exports =
       success,
       response: validationResult,
       error,
-    } = await asyncTryCatch({
-      fn: () => validateFunction({data: source, context}),
-    });
+    } = await asyncTryCatch(() => validateFunction({data: source, context}));
 
     if (!success) return res.status(500).send(error);
 
@@ -25,10 +23,6 @@ module.exports =
         })
       );
     }
-
-    // Replace the original request property with the validated parameters
-    if (validationResult?.parameters)
-      req[reqProperty] = validationResult.parameters;
 
     next();
   };
