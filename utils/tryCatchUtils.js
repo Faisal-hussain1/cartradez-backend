@@ -8,7 +8,7 @@ module.exports.tryCatch = ({fn}) => {
   }
 };
 
-module.exports.asyncTryCatch = async ({fn}) => {
+module.exports.asyncTryCatch = async (fn) => {
   try {
     const response = await fn();
 

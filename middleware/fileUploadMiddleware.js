@@ -63,12 +63,11 @@ module.exports = ({
       if (multiple) {
         if ((!req.files || req.files.length === 0) && require)
           return next(GeneralErrorsFactory.fileNotFoundErr());
-      }
-
-      if (!multiple && !req.file && require)
+      } else if (!req.file && require)
         return next(GeneralErrorsFactory.fileNotFoundErr());
 
       // Proceed to the next middleware or controller if the file upload is successful
+      req.body = JSON.parse(JSON.stringify(req.body));
       next();
     });
   };

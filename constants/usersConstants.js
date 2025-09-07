@@ -1,6 +1,8 @@
 const SYSTEM_ROLES = {
   admin: {value: 'admin'},
-  employee: {value: 'employee'},
+  manager: {value: 'manager'},
+  dealer: {value: 'dealer'},
+  user: {value: 'user'},
 };
 
 const SYSTEM_ROLES_VALUES = Object.values(SYSTEM_ROLES).map(

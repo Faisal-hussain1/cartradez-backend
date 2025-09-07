@@ -14,7 +14,6 @@ const {
   errorMiddleware,
   ddosProtectionMiddleware,
 } = require('./middleware');
-const swagger = require('./swagger');
 const {corsOrigins} = require('./utils');
 
 const app = express();
@@ -29,8 +28,6 @@ app.use(cors({origin: corsOrigins, credentials: true}));
 
 app.use(ddosProtectionMiddleware);
 v1.prepareV1Routes({app});
-
-swagger({app});
 
 app.get('/awake', (req, res) => {
   res.json();

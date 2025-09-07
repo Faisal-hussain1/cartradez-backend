@@ -39,9 +39,9 @@ async function hardDeleteMany({
     options,
   });
 
-  const {success, error, response} = await asyncTryCatch({
-    fn: async () => await model.deleteMany(finalQuery).session(session),
-  });
+  const {success, error, response} = await asyncTryCatch(
+    async () => await model.deleteMany(finalQuery).session(session)
+  );
 
   return {
     success,
@@ -63,9 +63,9 @@ async function hardDeleteOne({
     options,
   });
 
-  const {success, error, response} = await asyncTryCatch({
-    fn: async () => await model.deleteOne(finalQuery).session(session),
-  });
+  const {success, error, response} = await asyncTryCatch(
+    async () => await model.deleteOne(finalQuery).session(session)
+  );
 
   return {
     success,
@@ -90,13 +90,13 @@ async function updateOne({
     options,
   });
 
-  const {success, error, response} = await asyncTryCatch({
-    fn: async () =>
+  const {success, error, response} = await asyncTryCatch(
+    async () =>
       await model
         .updateOne(finalQuery, data)
         .session(session)
-        .setOptions({includeDeleted}),
-  });
+        .setOptions({includeDeleted})
+  );
 
   return {
     success,
@@ -121,13 +121,13 @@ async function updateMany({
     options,
   });
 
-  const {success, error, response} = await asyncTryCatch({
-    fn: async () =>
+  const {success, error, response} = await asyncTryCatch(
+    async () =>
       await model
         .updateMany(finalQuery, data)
         .session(session)
-        .setOptions({includeDeleted}),
-  });
+        .setOptions({includeDeleted})
+  );
 
   return {
     success,
@@ -145,16 +145,14 @@ module.exports.create = async ({model, data, session = null, options = {}}) => {
     success,
     error,
     response: createdDocs,
-  } = await asyncTryCatch({
-    fn: async () => {
-      if (Array.isArray(data)) {
-        return await model.create(data, {session});
-      } else {
-        const doc = new model(data);
+  } = await asyncTryCatch(async () => {
+    if (Array.isArray(data)) {
+      return await model.create(data, {session});
+    } else {
+      const doc = new model(data);
 
-        return await doc.save({session});
-      }
-    },
+      return await doc.save({session});
+    }
   });
 
   const docsToFetch = Array.isArray(createdDocs) ? createdDocs : [createdDocs];
@@ -190,29 +188,29 @@ module.exports.find = async ({
     fieldsInclusion,
   } = options;
 
-  const {select, skipMiddlewareGlobalPopulation} = generateSelectFields({
-    fieldsInclusion,
-  });
-
   // Merge the extraQueries with the query
   const finalQuery = attachExtraQueriesFromOptions({
     originalQuery: query,
     options,
   });
 
+  const {select, skipMiddlewareGlobalPopulation} = generateSelectFields({
+    fieldsInclusion,
+  });
+
   const {
     success,
     error,
     response: docs,
-  } = await asyncTryCatch({
-    fn: async () =>
+  } = await asyncTryCatch(
+    async () =>
       await model
         .find(finalQuery, null, queryProperties)
         .populate(populateFields)
         .select(select)
         .session(session)
-        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation}),
-  });
+        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation})
+  );
 
   return {success, docs, error};
 };
@@ -239,15 +237,15 @@ module.exports.findOne = async ({
     success,
     error,
     response: doc,
-  } = await asyncTryCatch({
-    fn: async () =>
+  } = await asyncTryCatch(
+    async () =>
       await model
         .findOne(finalQuery)
         .populate(populateFields)
         .select(select)
         .session(session)
-        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation}),
-  });
+        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation})
+  );
 
   return {success, doc, error};
 };
@@ -286,15 +284,15 @@ module.exports.findOneAndUpdate = async ({
     success,
     error,
     response: doc,
-  } = await asyncTryCatch({
-    fn: async () =>
+  } = await asyncTryCatch(
+    async () =>
       await model
         .findOneAndUpdate(finalQuery, data, {new: true})
         .populate(populateFields)
         .select(select)
         .session(session)
-        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation}),
-  });
+        .setOptions({includeDeleted, skipMiddlewareGlobalPopulation})
+  );
 
   return {success, doc, error, isDocumentUpdated: !!doc};
 };
@@ -418,29 +416,29 @@ module.exports.findOneAndDelete = async ({
       success,
       error,
       response: doc,
-    } = await asyncTryCatch({
-      fn: async () =>
+    } = await asyncTryCatch(
+      async () =>
         await model
           .findOneAndDelete(finalQuery)
           .populate(populateFields)
           .select(select)
           .session(session)
-          .setOptions({skipMiddlewareGlobalPopulation}),
-    }));
+          .setOptions({skipMiddlewareGlobalPopulation})
+    ));
   } else {
     ({
       success,
       error,
       response: doc,
-    } = await asyncTryCatch({
-      fn: async () =>
+    } = await asyncTryCatch(
+      async () =>
         await model
           .findOneAndUpdate(finalQuery, {deletedAt: new Date()}, {new: true})
           .populate(populateFields)
           .select(select)
           .session(session)
-          .setOptions({skipMiddlewareGlobalPopulation}),
-    }));
+          .setOptions({skipMiddlewareGlobalPopulation})
+    ));
   }
 
   return {success, doc, error, isDocumentDeleted: !!doc};
@@ -623,9 +621,9 @@ module.exports.aggregate = async ({model, pipeline, options = {}}) => {
     success,
     error,
     response: docs,
-  } = await asyncTryCatch({
-    fn: async () => await model.aggregate(finalPipeline, {includeDeleted}),
-  });
+  } = await asyncTryCatch(
+    async () => await model.aggregate(finalPipeline, {includeDeleted})
+  );
 
   return {success, docs, error};
 };
@@ -639,10 +637,10 @@ module.exports.countDocuments = async ({model, query = {}, options = {}}) => {
     options,
   });
 
-  const {success, error, response} = await asyncTryCatch({
-    fn: async () =>
-      await model.countDocuments(finalQuery).setOptions({includeDeleted}),
-  });
+  const {success, error, response} = await asyncTryCatch(
+    async () =>
+      await model.countDocuments(finalQuery).setOptions({includeDeleted})
+  );
 
   return {
     success,
