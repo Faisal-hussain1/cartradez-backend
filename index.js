@@ -1,11 +1,11 @@
 require('dotenv').config();
 const config = require('config');
+const serverless = require('serverless-http');
 
 const app = require('./app');
 
 // === Environment-based code ===
 if (config.get('env') === config.get('envVariables.prod')) {
-  // Production-only logic here
   console.warn('Running in production mode');
 }
 
@@ -24,5 +24,5 @@ if (require.main === module) {
   );
 }
 
-// === Export app for Vercel ===
-module.exports = app;
+// === Export wrapped handler for Vercel ===
+module.exports = serverless(app);
