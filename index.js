@@ -1,23 +1,28 @@
 require('dotenv').config();
-
 const config = require('config');
-const serverless = require('serverless-http');
 
-const app = require('./app'); // keep your app.js as it is
+const app = require('./app');
 
-// No sockets here 🚫
-
-// Handle environment-specific code
+// === Environment-based code ===
 if (config.get('env') === config.get('envVariables.prod')) {
-  // Production-only scripts
+  // Production-only logic here
+  console.warn('Running in production mode');
 }
 
 if (config.get('env') === config.get('envVariables.dev')) {
-  const testOnDevelopment = async () => {};
-
+  const testOnDevelopment = async () => {
+    console.warn('Running in development mode');
+  };
   testOnDevelopment();
 }
 
-// Export for Vercel
+// === Local run (node index.js) ===
+if (require.main === module) {
+  const port = process.env.PORT || 3001;
+  app.listen(port, () =>
+    console.warn(`Ready! Available at http://localhost:${port}`)
+  );
+}
+
+// === Export app for Vercel ===
 module.exports = app;
-module.exports.handler = serverless(app);
