@@ -8,6 +8,7 @@ const {
   accessMiddleware,
   validatorMiddleware,
   fileUploadMiddleware,
+  authMiddleware,
 } = require('../middleware');
 const {productsSchema} = require('../schemas');
 const {catchAsync} = require('../utils');
@@ -17,6 +18,7 @@ const router = express.Router();
 
 router.post(
   '/add',
+  authMiddleware,
   accessMiddleware({
     customFn: checkAllowedRoles({
       allowedRoles: [SYSTEM_ROLES.admin.value, SYSTEM_ROLES.user.value],
@@ -33,14 +35,6 @@ router.post(
   catchAsync(ProductsController.addNewProduct)
 );
 
-router.get(
-  '/',
-  accessMiddleware({
-    customFn: checkAllowedRoles({
-      allowedRoles: [SYSTEM_ROLES.admin.value, SYSTEM_ROLES.user.value],
-    }),
-  }),
-  catchAsync(ProductsController.getAllProducts)
-);
+router.get('/', catchAsync(ProductsController.getAllProducts));
 
 module.exports = router;

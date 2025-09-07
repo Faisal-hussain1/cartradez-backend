@@ -55,6 +55,19 @@ const PRODUCT_STATUSES_VALUES = Object.values(PRODUCT_STATUSES).map(
 
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
+const PRODUCT_ACTIONS = {
+  created: {
+    value: 'created',
+  },
+  bought: {
+    value: 'bought',
+  },
+};
+
+const PRODUCT_ACTIONS_VALUES = Object.values(PRODUCT_ACTIONS).map(
+  (action) => action.value
+);
+
 module.exports = {
   PRODUCT_CATEGORIES,
   PRODUCT_CATEGORIES_VALUES,
@@ -69,4 +82,6 @@ module.exports = {
   PRODUCT_STATUSES,
   PRODUCT_STATUSES_VALUES,
   ALLOWED_FILE_TYPES,
+  PRODUCT_ACTIONS,
+  PRODUCT_ACTIONS_VALUES,
 };

@@ -1,14 +1,18 @@
 const {mongoose} = require('mongoose');
 
+const {generalConstant} = require('../constants');
+
 const {
   PRODUCT_CATEGORIES,
   PRODUCT_CURRENCY_TYPES,
-  PRODUCT_STATUSES,
+  PRODUCT_ACTIONS,
 } = require('../constants/productConstants');
 const {ProductsResponsesFactory} = require('../factories');
 const ProductCategoriesModel = require('../models/ProductCategoriesModel');
 const ProductsModel = require('../models/ProductsModel');
 const {FileServices, GeneralServices} = require('../services');
+const {getCurrentTimestamp} = require('../utils/dateUtils');
+const {prepareProductsData} = require('../utils/productsUtils');
 
 module.exports = class ProductsController {
   static async addNewProduct(req, res, next) {
@@ -30,8 +34,16 @@ module.exports = class ProductsController {
       if (categoryRetrievedError) throw categoryRetrievedError;
 
       data.categoryId = retrievedCategory._id;
-      data.sellerId = loggedInUser._id;
+      data.creatorId = loggedInUser._id;
       data.currency = PRODUCT_CURRENCY_TYPES.usd.value;
+      data.timestamps = getCurrentTimestamp();
+      data.events = [
+        {
+          action: PRODUCT_ACTIONS.created.value,
+          userId: loggedInUser._id,
+          timestamp: getCurrentTimestamp(),
+        },
+      ];
 
       session = await mongoose.startSession();
       session.startTransaction();
@@ -86,17 +98,61 @@ module.exports = class ProductsController {
   }
 
   static async getAllProducts(req, res, next) {
+    const limit =
+      parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
+
+    const page =
+      parseInt(req.query.page) || generalConstant.paginationDefaults.page;
+
+    const skip = (page - 1) * limit;
+
+    const {count, error: countErr} = await GeneralServices.countDocuments({
+      model: ProductsModel,
+      query: {},
+    });
+
+    if (countErr) throw countErr;
+
+    const query = {
+      ...(req.query.search && {
+        $or: [
+          {
+            title: {
+              $regex: req.query.search.trim(),
+              $options: 'i',
+            },
+          },
+        ],
+      }),
+    };
+
     const {docs: retrievedProducts, error: productsRetrievedError} =
       await GeneralServices.find({
         model: ProductsModel,
-        query: {status: PRODUCT_STATUSES.active.value},
+        query,
+        options: {
+          ...req.getUsersInclusionOptions,
+          queryProperties: {
+            skip,
+            limit,
+            sort: {createdAt: -1},
+          },
+        },
       });
 
     if (productsRetrievedError) throw productsRetrievedError;
 
+    const preparedProducts = prepareProductsData({
+      data: retrievedProducts,
+    });
+
     return next(
       ProductsResponsesFactory.productsRetrievedSuccessfully({
-        products: retrievedProducts,
+        products: preparedProducts,
+        count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
       })
     );
   }

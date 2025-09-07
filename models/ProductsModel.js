@@ -10,6 +10,7 @@ const {
   PRODUCT_TRANSMISSION_TYPES_VALUES,
   PRODUCT_STATUSES_VALUES,
   PRODUCT_STATUSES,
+  PRODUCT_ACTIONS_VALUES,
 } = require('../constants/productConstants');
 
 const Schema = mongoose.Schema;
@@ -17,6 +18,7 @@ const Schema = mongoose.Schema;
 const productsSchema = new Schema(
   {
     title: {type: String, required: true},
+    price: {type: Number, required: true},
     description: {
       type: String,
       required: true,
@@ -26,24 +28,14 @@ const productsSchema = new Schema(
       ref: 'ProductCategories',
       required: true,
     },
-    price: {type: Number, required: true},
     currency: {type: String, default: PRODUCT_CURRENCY_TYPES.usd.value},
-    images: [
-      {
-        key: {type: String, required: true},
-        url: {type: String, required: true},
-      },
-    ],
-
-    // isVerified: {type: Boolean, default: true},
     condition: {
       type: String,
       enum: PRODUCT_CONDITIONS_VALUES,
       default: PRODUCT_CONDITIONS.used.value,
     },
     location: {type: String, required: true},
-    sellerId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
-
+    creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
     brand: {type: String, required: true},
     model: {type: String, required: true},
     year: {type: Number, required: true},
@@ -60,14 +52,39 @@ const productsSchema = new Schema(
     },
     engineCapacity: {type: Number},
     color: {type: String, required: true},
-
     isFeatured: {type: Boolean, default: false},
     status: {
       type: String,
       enum: PRODUCT_STATUSES_VALUES,
       default: PRODUCT_STATUSES.active.value,
     },
-
+    images: [
+      {
+        key: {type: String, required: true},
+        url: {type: String, required: true},
+      },
+    ],
+    timestamp: {
+      type: Number,
+    },
+    events: [
+      {
+        action: {
+          type: String,
+          enum: PRODUCT_ACTIONS_VALUES,
+          required: true,
+        },
+        userId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Users',
+          required: true,
+        },
+        timestamp: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     deletedAt: {
       type: Date,
       default: null,

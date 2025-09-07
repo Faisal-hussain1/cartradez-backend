@@ -245,7 +245,7 @@ module.exports = class UsersController {
       error,
     } = await UsersServices.getUserByEmail({
       email: inputData.email,
-      optionsInclude: ['password', 'organizations'],
+      isPasswordRequired: true,
     });
 
     if (!isSuccessful) throw error;

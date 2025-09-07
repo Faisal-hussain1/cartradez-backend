@@ -4,4 +4,15 @@ module.exports = {
   passwordResetTokenExpiry: '1h', // 1 hour
   accountVerificationTokenExpiry: '1h', // 1 hour
   userInvitationTokenExpiry: '1d',
+
+  paginationDefaults: {
+    limit: 10,
+    page: 1,
+  },
+};
+
+module.exports.TIME_ZONES = {
+  utc: {
+    value: 'utc',
+  },
 };

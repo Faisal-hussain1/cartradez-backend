@@ -1,5 +1,6 @@
 const {MongosFactory} = require('../factories');
-const {OrganizationsModel, UsersModel} = require('../models');
+const {UsersModel} = require('../models');
+const OrganizationsModel = require('../models/OrganizationsModel');
 const {passwordsUtils} = require('../utils');
 const {asyncTryCatch} = require('../utils/tryCatchUtils');
 
@@ -84,6 +85,32 @@ module.exports = class UsersServices {
       });
 
     return {success, error, isDocumentUpdated, responseObj};
+  }
+
+  static async setPermissions({userId, permissions}, session) {
+    const query = {_id: userId};
+    const update = {};
+
+    const addPermission = ({entityType, entityId, accessLevelsToSet}) => {
+      update[`${entityType}.${entityId}`] = accessLevelsToSet;
+    };
+
+    if (Array.isArray(permissions)) permissions.forEach(addPermission);
+    else addPermission(permissions);
+
+    const {
+      success,
+      doc: user,
+      error,
+      isDocumentUpdated,
+    } = await MongosFactory.findOneAndUpdate({
+      model: UsersModel,
+      query,
+      data: update,
+      session,
+    });
+
+    return {success, user, error, isDocumentUpdated};
   }
 
   static async removePermissions({mapKey}) {

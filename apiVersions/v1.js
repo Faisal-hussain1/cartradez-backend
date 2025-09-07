@@ -15,7 +15,7 @@ const prepareV1Routes = ({app}) => {
   app.use(`${apiPrefix}public`, publicRoute);
   app.use(`${apiPrefix}private`, authMiddleware, privateRoute);
   app.use(`${apiPrefix}entities`, authMiddleware, entitiesRoute);
-  app.use(`${apiPrefix}products`, authMiddleware, productsRoute);
+  app.use(`${apiPrefix}products`, productsRoute);
 };
 
 module.exports = {apiPrefix, prepareV1Routes};

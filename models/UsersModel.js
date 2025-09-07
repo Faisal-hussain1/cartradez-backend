@@ -14,6 +14,10 @@ const usersSchema = new Schema(
   {
     firstName: {type: String, required: [true, 'User must have a first name']},
     lastName: {type: String, required: [true, 'User must have a last name']},
+    phoneNumber: {
+      type: String,
+      required: true,
+    },
     email: {
       type: String,
       required: [true, 'User must have a email'],
@@ -64,7 +68,7 @@ usersSchema.plugin(hideTimestampsPlugin);
 
 // Use the soft delete plugin
 usersSchema.plugin(softDeleteWithIndexesPlugin, {
-  uniqueFields: ['email', 'username'],
+  uniqueFields: ['email'],
 });
 
 usersSchema.virtual('currentActiveOrganization').get(function () {

@@ -15,13 +15,25 @@ module.exports = class ProductsResponsesFactory {
     });
   }
 
-  static productsRetrievedSuccessfully({products}) {
+  static productsRetrievedSuccessfully({
+    products,
+    count,
+    page,
+    limit,
+    totalPages,
+  }) {
     return new AppResponse({
       message: 'Products retrieved successfully',
       statusCode: 200,
       body: {
-        products,
         type: PRODUCT_SUCCESS_TYPES.productsRetrievedSuccessfully.value,
+        products,
+        pagination: {
+          count,
+          page,
+          limit,
+          totalPages,
+        },
       },
     });
   }
