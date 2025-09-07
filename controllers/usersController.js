@@ -104,7 +104,6 @@ module.exports = class UsersController {
       if (session) session.endSession();
     }
   }
-
   static async inviteUser(req, res, next) {
     const {email, role} = req.body;
     const token = req.jwtToken;
