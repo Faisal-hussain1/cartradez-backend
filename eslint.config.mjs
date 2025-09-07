@@ -1,9 +1,7 @@
-import js from '@eslint/js';
 import {defineConfig} from 'eslint/config';
-import importPlugin from 'eslint-plugin-import';
 import globals from 'globals';
-
-import enforceSingleObjectParam from './eslint-rules/enforceSingleObjectParam.js';
+import js from '@eslint/js';
+import importPlugin from 'eslint-plugin-import';
 
 export default defineConfig([
   {files: ['**/*.{js,mjs,cjs}']},
@@ -21,43 +19,9 @@ export default defineConfig([
   {
     files: ['**/*.{js,mjs,cjs}'],
     ignores: ['**/*.test.js'],
-    plugins: {
-      js,
-      import: importPlugin,
-      'local-rules': {
-        rules: {
-          'enforce-single-object-param': enforceSingleObjectParam,
-        },
-      },
-    },
-
+    plugins: {js, import: importPlugin},
     extends: ['js/recommended'],
     rules: {
-      'no-console': ['error', {allow: ['warn', 'error']}],
-
-      'import/order': [
-        'error',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            ['parent', 'sibling', 'index'],
-          ],
-          pathGroups: [
-            {pattern: 'react', group: 'external', position: 'before'},
-            {pattern: './**', group: 'internal'},
-            {pattern: '../**', group: 'internal'},
-          ],
-          pathGroupsExcludedImportTypes: ['react'],
-          'newlines-between': 'always-and-inside-groups',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
-
       // Add new line above comment
       'lines-around-comment': [
         'error',
@@ -102,22 +66,6 @@ export default defineConfig([
           reportUsedIgnorePattern: false,
         },
       ],
-
-      // 'local-rules/enforce-single-object-param': ['error'],
-    },
-  },
-
-  // Disable for middleware only
-  {
-    files: [
-      '**/middleware.js',
-      '**/middleware/**/*.js',
-      '**/controllers.js',
-      '**/controllers/**/*.js',
-      '**/models/plugins/*.js',
-    ],
-    rules: {
-      'local-rules/enforce-single-object-param': 'off',
     },
   },
 ]);

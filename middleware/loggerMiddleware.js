@@ -8,8 +8,7 @@ const {combine, timestamp, json, errors} = winston.format;
 
 const sentryTransport = new Sentry({
   sentry: {
-    // dsn: config.get('sentryDsn'),
-    dsn: process.env.SENTRY_DSN,
+    dsn: config.get('sentryDsn'),
     environment: config.get('env'),
     tracesSampleRate: 1.0,
   },

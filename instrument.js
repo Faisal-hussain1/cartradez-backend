@@ -2,7 +2,7 @@ const Sentry = require('@sentry/node');
 const config = require('config');
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: config.get('sentryDsn'),
   tracesSampleRate: 1.0,
   profilesSampleRate: 1.0,
   environment: config.get('env'),
