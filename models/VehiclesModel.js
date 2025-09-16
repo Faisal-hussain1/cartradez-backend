@@ -3,36 +3,43 @@ const mongoose = require('mongoose');
 const {hideTimestampsPlugin} = require('./plugins');
 
 const {
-  PRODUCT_CONDITIONS_VALUES,
-  PRODUCT_CONDITIONS,
-  PRODUCT_FUEL_TYPES_VALUES,
-  PRODUCT_CURRENCY_TYPES,
-  PRODUCT_TRANSMISSION_TYPES_VALUES,
-  PRODUCT_STATUSES_VALUES,
-  PRODUCT_STATUSES,
-  PRODUCT_ACTIONS_VALUES,
-} = require('../constants/productConstants');
+  VEHICLE_CONDITIONS_VALUES,
+  VEHICLE_CONDITIONS,
+  VEHICLE_FUEL_TYPES_VALUES,
+  VEHICLE_CURRENCY_TYPES,
+  VEHICLE_TRANSMISSION_TYPES_VALUES,
+  VEHICLE_STATUSES_VALUES,
+  VEHICLE_STATUSES,
+  VEHICLE_ACTIONS_VALUES,
+  VEHICLE_CATEGORIES,
+  CAR_TYPES_VALUES,
+} = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
 
-const productsSchema = new Schema(
+const vehiclesSchema = new Schema(
   {
-    title: {type: String, required: true},
+    name: {type: String, required: true, enum: CAR_TYPES_VALUES},
     price: {type: Number, required: true},
     description: {
       type: String,
       required: true,
     },
-    categoryId: {
-      type: Schema.Types.ObjectId,
-      ref: 'ProductCategories',
+    category: {
+      type: String,
       required: true,
+      enum: VEHICLE_CONDITIONS_VALUES,
+      default: VEHICLE_CATEGORIES.car.value,
     },
-    currency: {type: String, default: PRODUCT_CURRENCY_TYPES.usd.value},
+    currency: {
+      type: String,
+      required: true,
+      default: VEHICLE_CURRENCY_TYPES.usd.value,
+    },
     condition: {
       type: String,
-      enum: PRODUCT_CONDITIONS_VALUES,
-      default: PRODUCT_CONDITIONS.used.value,
+      enum: VEHICLE_CONDITIONS_VALUES,
+      default: VEHICLE_CONDITIONS.used.value,
     },
     location: {type: String, required: true},
     creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
@@ -42,21 +49,22 @@ const productsSchema = new Schema(
     mileage: {type: Number, required: true},
     fuelType: {
       type: String,
-      enum: PRODUCT_FUEL_TYPES_VALUES,
+      enum: VEHICLE_FUEL_TYPES_VALUES,
       required: true,
     },
     transmission: {
       type: String,
       required: true,
-      enum: PRODUCT_TRANSMISSION_TYPES_VALUES,
+      enum: VEHICLE_TRANSMISSION_TYPES_VALUES,
     },
     engineCapacity: {type: Number},
     color: {type: String, required: true},
     isFeatured: {type: Boolean, default: false},
+    greatPrice: {type: Boolean, default: false},
     status: {
       type: String,
-      enum: PRODUCT_STATUSES_VALUES,
-      default: PRODUCT_STATUSES.active.value,
+      enum: VEHICLE_STATUSES_VALUES,
+      default: VEHICLE_STATUSES.active.value,
     },
     images: [
       {
@@ -71,7 +79,7 @@ const productsSchema = new Schema(
       {
         action: {
           type: String,
-          enum: PRODUCT_ACTIONS_VALUES,
+          enum: VEHICLE_ACTIONS_VALUES,
           required: true,
         },
         userId: {
@@ -100,6 +108,6 @@ const productsSchema = new Schema(
 );
 
 // Use the hide timestamps plugin
-productsSchema.plugin(hideTimestampsPlugin);
+vehiclesSchema.plugin(hideTimestampsPlugin);
 
-module.exports = mongoose.model('Products', productsSchema);
+module.exports = mongoose.model('Vehicles', vehiclesSchema);

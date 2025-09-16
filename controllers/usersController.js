@@ -68,7 +68,7 @@ module.exports = class UsersController {
                 view: [accessConstants.ACCESS_LEVELS.none],
                 update: [accessConstants.ACCESS_LEVELS.none],
               },
-              products: {
+              vehicles: {
                 view: [accessConstants.ACCESS_LEVELS.all],
                 update: [],
                 remove: [accessConstants.ACCESS_LEVELS.none],
