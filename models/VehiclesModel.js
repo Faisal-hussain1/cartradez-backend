@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 const {hideTimestampsPlugin} = require('./plugins');
 
 const {
-  VEHICLE_CONDITIONS_VALUES,
-  VEHICLE_CONDITIONS,
   VEHICLE_FUEL_TYPES_VALUES,
   VEHICLE_CURRENCY_TYPES,
   VEHICLE_TRANSMISSION_TYPES_VALUES,
@@ -12,41 +10,33 @@ const {
   VEHICLE_STATUSES,
   VEHICLE_ACTIONS_VALUES,
   VEHICLE_CATEGORIES,
-  CAR_TYPES_VALUES,
+  VEHICLE_MAKES_VALUES,
+  VEHICLE_MODELS_VALUES,
+  VEHICLE_CURRENCY_TYPES_VALUES,
+  VEHICLE_CATEGORIES_VALUES,
 } = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
 
 const vehiclesSchema = new Schema(
   {
-    name: {type: String, required: true, enum: CAR_TYPES_VALUES},
+    make: {type: String, required: true, enum: VEHICLE_MAKES_VALUES},
+    model: {type: String, required: true, enum: VEHICLE_MODELS_VALUES},
+    year: {type: Number, required: true},
+    color: {type: String, required: true},
+    mileage: {type: Number, required: true},
     price: {type: Number, required: true},
-    description: {
-      type: String,
-      required: true,
-    },
-    category: {
-      type: String,
-      required: true,
-      enum: VEHICLE_CONDITIONS_VALUES,
-      default: VEHICLE_CATEGORIES.car.value,
-    },
     currency: {
       type: String,
       required: true,
+      enum: VEHICLE_CURRENCY_TYPES_VALUES,
       default: VEHICLE_CURRENCY_TYPES.usd.value,
     },
-    condition: {
-      type: String,
-      enum: VEHICLE_CONDITIONS_VALUES,
-      default: VEHICLE_CONDITIONS.used.value,
+    description: {type: String, required: true},
+    engineSize: {
+      type: Number,
+      required: true,
     },
-    location: {type: String, required: true},
-    creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
-    brand: {type: String, required: true},
-    model: {type: String, required: true},
-    year: {type: Number, required: true},
-    mileage: {type: Number, required: true},
     fuelType: {
       type: String,
       enum: VEHICLE_FUEL_TYPES_VALUES,
@@ -54,17 +44,8 @@ const vehiclesSchema = new Schema(
     },
     transmission: {
       type: String,
-      required: true,
       enum: VEHICLE_TRANSMISSION_TYPES_VALUES,
-    },
-    engineCapacity: {type: Number},
-    color: {type: String, required: true},
-    isFeatured: {type: Boolean, default: false},
-    greatPrice: {type: Boolean, default: false},
-    status: {
-      type: String,
-      enum: VEHICLE_STATUSES_VALUES,
-      default: VEHICLE_STATUSES.active.value,
+      required: true,
     },
     images: [
       {
@@ -72,8 +53,20 @@ const vehiclesSchema = new Schema(
         url: {type: String, required: true},
       },
     ],
-    timestamp: {
-      type: Number,
+
+    category: {
+      type: String,
+      required: true,
+      enum: VEHICLE_CATEGORIES_VALUES,
+      default: VEHICLE_CATEGORIES.car.value,
+    },
+    creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
+    isFeatured: {type: Boolean, default: false},
+    isGreatPrice: {type: Boolean, default: false},
+    status: {
+      type: String,
+      enum: VEHICLE_STATUSES_VALUES,
+      default: VEHICLE_STATUSES.active.value,
     },
     events: [
       {
@@ -97,6 +90,25 @@ const vehiclesSchema = new Schema(
       type: Date,
       default: null,
     },
+
+    // body: {type: String, required: true, enum: VEHICLE_BODIES_VALUES},
+    // seats: {type: Number},
+    // doors: {type: String, enum: VEHICLE_DOORS_VALUES},
+    // numberPlate: {
+    //   type: String,
+    //   required: true,
+    // },
+    // cylinder: {
+    //   type: String,
+    //   enum: VEHICLE_CYLINDERS_VALUES,
+    // },
+    // modelDetail: {
+    //   type: String,
+    // },
+    // importHistory: {
+    //   type: String,
+    // },
+    // location: {type: String},
   },
   {
     timestamps: true,

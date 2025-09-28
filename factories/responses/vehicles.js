@@ -36,4 +36,15 @@ module.exports = class VehiclesResponsesFactory {
       },
     });
   }
+
+  static vehicleRetrievedSuccessfully({vehicle}) {
+    return new AppResponse({
+      message: 'Vehicle retrieved successfully',
+      statusCode: 200,
+      body: {
+        vehicle,
+        type: VEHICLES_SUCCESS_TYPES.vehicleRetrievedSuccessfully.value,
+      },
+    });
+  }
 };

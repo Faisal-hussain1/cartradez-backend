@@ -5,4 +5,7 @@ module.exports.VEHICLES_SUCCESS_TYPES = {
   vehiclesRetrievedSuccessfully: {
     value: 'VEHICLES_RETRIEVED_SUCCESSFULLY',
   },
+  vehicleRetrievedSuccessfully: {
+    value: 'VEHICLE_RETRIEVED_SUCCESSFULLY',
+  },
 };

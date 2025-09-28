@@ -37,4 +37,6 @@ router.post(
 
 router.get('/', catchAsync(VehiclesController.getAllVehicles));
 
+router.get('/:id', catchAsync(VehiclesController.getVehicle));
+
 module.exports = router;

@@ -2,11 +2,12 @@ const {mongoose} = require('mongoose');
 
 const {generalConstant} = require('../constants');
 
+const {VEHICLE_ACTIONS} = require('../constants/vehicleConstants');
+
 const {
-  VEHICLE_CURRENCY_TYPES,
-  VEHICLE_ACTIONS,
-} = require('../constants/vehicleConstants');
-const {VehiclesResponsesFactory} = require('../factories');
+  VehiclesResponsesFactory,
+  VehiclesErrorsFactory,
+} = require('../factories');
 const {FileServices, GeneralServices} = require('../services');
 const {getCurrentTimestamp} = require('../utils/dateUtils');
 const {prepareVehiclesData} = require('../utils/vehiclesUtils');
@@ -22,10 +23,11 @@ module.exports = class VehiclesController {
     let createdVehicleId;
     let vehicleImages = [];
 
+    if (req?.files && req.files.length < 3)
+      return next(VehiclesErrorsFactory.vehicleLessImagesErr());
+
     try {
       data.creatorId = loggedInUser._id;
-      data.currency = VEHICLE_CURRENCY_TYPES.usd.value;
-      data.timestamps = getCurrentTimestamp();
       data.events = [
         {
           action: VEHICLE_ACTIONS.created.value,
@@ -106,7 +108,7 @@ module.exports = class VehiclesController {
       ...(req.query.search && {
         $or: [
           {
-            name: {
+            model: {
               $regex: req.query.search.trim(),
               $options: 'i',
             },
@@ -142,6 +144,27 @@ module.exports = class VehiclesController {
         page,
         limit,
         totalPages: Math.ceil(count / limit),
+      })
+    );
+  }
+
+  static async getVehicle(req, res, next) {
+    const vehicleId = req.params.id;
+
+    const {doc: retrievedVehicle, error: gettingVehicleErr} =
+      await GeneralServices.findOne({
+        model: VehiclesModel,
+        query: {_id: vehicleId},
+      });
+
+    if (gettingVehicleErr) throw gettingVehicleErr;
+
+    if (!retrievedVehicle)
+      return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
+    return next(
+      VehiclesResponsesFactory.vehicleRetrievedSuccessfully({
+        vehicle: retrievedVehicle,
       })
     );
   }

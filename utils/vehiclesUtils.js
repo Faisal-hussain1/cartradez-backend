@@ -3,21 +3,30 @@ exports.prepareVehiclesData = ({data}) => {
   for (const vehicle of data) {
     preparedVehiclesData.push({
       id: vehicle._id,
-      name: vehicle.name,
-      price: vehicle.price,
-      description: vehicle.description,
-      condition: vehicle.condition,
-      location: vehicle.location,
-      brand: vehicle.brand,
+      make: vehicle.make,
       model: vehicle.model,
       year: vehicle.year,
+      color: vehicle.color,
       mileage: vehicle.mileage,
+      price: vehicle.price,
+      currency: vehicle.currency,
+      images: vehicle.images,
+      engineSize: vehicle.engineSize,
       fuelType: vehicle.fuelType,
       transmission: vehicle.transmission,
-      color: vehicle.color,
-      status: vehicle.status,
+
       isFeatured: vehicle.isFeatured,
-      images: vehicle.images,
+      isGreatPrice: vehicle.isGreatPrice,
+      status: vehicle.status,
+
+      // body: vehicle.body,
+      // seats: vehicle?.seats,
+      // doors: vehicle?.doors,
+      // numberPlate: vehicle?.numberPlate,
+      // cylinder: vehicle?.cylinder,
+      // modelDetail: vehicle?.modelDetail,
+      // importHistory: vehicle?.importHistory,
+      // location: vehicle?.location,
     });
   }
 
