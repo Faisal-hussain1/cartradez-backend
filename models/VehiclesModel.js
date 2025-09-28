@@ -13,6 +13,7 @@ const {
   VEHICLE_MODELS_VALUES,
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_CATEGORIES_VALUES,
+  VEHICLE_ACTIONS_VALUES,
 } = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
@@ -60,7 +61,7 @@ const vehiclesSchema = new Schema(
       default: VEHICLE_CATEGORIES.car.value,
     },
 
-    // creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
+    creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
     isFeatured: {type: Boolean, default: false},
     isGreatPrice: {type: Boolean, default: false},
     status: {
@@ -69,24 +70,24 @@ const vehiclesSchema = new Schema(
       default: VEHICLE_STATUSES.active.value,
     },
 
-    // events: [
-    //   {
-    //     action: {
-    //       type: String,
-    //       enum: VEHICLE_ACTIONS_VALUES,
-    //       required: true,
-    //     },
-    //     userId: {
-    //       type: Schema.Types.ObjectId,
-    //       ref: 'Users',
-    //       required: true,
-    //     },
-    //     timestamp: {
-    //       type: Number,
-    //       required: true,
-    //     },
-    //   },
-    // ],
+    events: [
+      {
+        action: {
+          type: String,
+          enum: VEHICLE_ACTIONS_VALUES,
+          required: true,
+        },
+        userId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Users',
+          required: true,
+        },
+        timestamp: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
     deletedAt: {
       type: Date,
       default: null,

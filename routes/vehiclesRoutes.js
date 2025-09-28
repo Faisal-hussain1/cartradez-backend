@@ -3,21 +3,27 @@ const express = require('express');
 const {ALLOWED_FILE_TYPES} = require('../constants/vehicleConstants');
 const {VehiclesController} = require('../controllers');
 
-const {validatorMiddleware, fileUploadMiddleware} = require('../middleware');
+const {
+  validatorMiddleware,
+  fileUploadMiddleware,
+  authMiddleware,
+  accessMiddleware,
+} = require('../middleware');
 const {vehiclesSchema} = require('../schemas');
 const {catchAsync} = require('../utils');
+const {checkAllowedRoles} = require('../utils/validatorUtils');
+const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
 const router = express.Router();
 
 router.post(
   '/add',
-
-  // authMiddleware,
-  // accessMiddleware({
-  //   customFn: checkAllowedRoles({
-  //     allowedRoles: [SYSTEM_ROLES.admin.value, SYSTEM_ROLES.user.value],
-  //   }),
-  // }),
+  authMiddleware,
+  accessMiddleware({
+    customFn: checkAllowedRoles({
+      allowedRoles: [SYSTEM_ROLES.admin.value, SYSTEM_ROLES.user.value],
+    }),
+  }),
   fileUploadMiddleware({
     allowedTypes: ALLOWED_FILE_TYPES,
     multiple: true,
