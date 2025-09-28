@@ -11,7 +11,7 @@
     "test": "jest --watchAll --detectOpenHandles",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
-    "prepare": "husky"
+    "prepare": "if [ -z \"$CI\" ]; then husky install; fi"
   },
   "keywords": [
     "",
