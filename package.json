@@ -10,8 +10,7 @@
     "prod": "nodemon index.js",
     "test": "jest --watchAll --detectOpenHandles",
     "lint": "eslint",
-    "lint:fix": "eslint --fix",
-    "prepare": "if [ -z \"$CI\" ]; then husky install; fi"
+    "lint:fix": "eslint --fix"
   },
   "keywords": [
     "",
