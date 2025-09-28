@@ -2,21 +2,19 @@ const {mongoose} = require('mongoose');
 
 const {generalConstant} = require('../constants');
 
-const {VEHICLE_ACTIONS} = require('../constants/vehicleConstants');
-
 const {
   VehiclesResponsesFactory,
   VehiclesErrorsFactory,
 } = require('../factories');
 const {FileServices, GeneralServices} = require('../services');
-const {getCurrentTimestamp} = require('../utils/dateUtils');
 const {prepareVehiclesData} = require('../utils/vehiclesUtils');
 const VehiclesModel = require('../models/VehiclesModel');
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
     const data = req.body;
-    const loggedInUser = req.jwtToken.user;
+
+    // const loggedInUser = req.jwtToken.user;
 
     let session;
     let awsFileKeys = [];
@@ -27,14 +25,14 @@ module.exports = class VehiclesController {
       return next(VehiclesErrorsFactory.vehicleLessImagesErr());
 
     try {
-      data.creatorId = loggedInUser._id;
-      data.events = [
-        {
-          action: VEHICLE_ACTIONS.created.value,
-          userId: loggedInUser._id,
-          timestamp: getCurrentTimestamp(),
-        },
-      ];
+      // data.creatorId = loggedInUser._id;
+      // data.events = [
+      //   {
+      //     action: VEHICLE_ACTIONS.created.value,
+      //     userId: loggedInUser._id,
+      //     timestamp: getCurrentTimestamp(),
+      //   },
+      // ];
 
       session = await mongoose.startSession();
       session.startTransaction();
