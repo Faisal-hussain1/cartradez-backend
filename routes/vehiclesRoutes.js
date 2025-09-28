@@ -1,8 +1,8 @@
 const express = require('express');
 
-const {ALLOWED_FILE_TYPES} = require('../constants/productConstants');
+const {ALLOWED_FILE_TYPES} = require('../constants/vehicleConstants');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
-const {ProductsController} = require('../controllers');
+const {VehiclesController} = require('../controllers');
 
 const {
   accessMiddleware,
@@ -10,7 +10,7 @@ const {
   fileUploadMiddleware,
   authMiddleware,
 } = require('../middleware');
-const {productsSchema} = require('../schemas');
+const {vehiclesSchema} = require('../schemas');
 const {catchAsync} = require('../utils');
 const {checkAllowedRoles} = require('../utils/validatorUtils');
 
@@ -29,12 +29,14 @@ router.post(
     multiple: true,
   }),
   validatorMiddleware({
-    validateFunction: productsSchema.validateCreateProductRequest,
+    validateFunction: vehiclesSchema.validateCreateVehicleRequest,
     reqProperty: 'body',
   }),
-  catchAsync(ProductsController.addNewProduct)
+  catchAsync(VehiclesController.addNewVehicle)
 );
 
-router.get('/', catchAsync(ProductsController.getAllProducts));
+router.get('/', catchAsync(VehiclesController.getAllVehicles));
+
+router.get('/:id', catchAsync(VehiclesController.getVehicle));
 
 module.exports = router;

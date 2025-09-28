@@ -23,7 +23,7 @@ const userAccessLevelSchema = new Schema(
   {_id: false}
 );
 
-const productsAccessLevelSchema = new Schema(
+const vehiclesAccessLevelSchema = new Schema(
   {
     view: {
       type: [String],
@@ -40,7 +40,7 @@ const productsAccessLevelSchema = new Schema(
 const levelsSchema = new Schema(
   {
     users: userAccessLevelSchema,
-    products: productsAccessLevelSchema,
+    VEHICLE_ACTIONS_VALUESs: vehiclesAccessLevelSchema,
 
     // You can add more modules/resources here
     // e.g. companies: companyAccessLevelSchema,

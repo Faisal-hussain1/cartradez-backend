@@ -2,44 +2,35 @@ const {mongoose} = require('mongoose');
 
 const {generalConstant} = require('../constants');
 
+const {VEHICLE_ACTIONS} = require('../constants/vehicleConstants');
+
 const {
-  PRODUCT_CATEGORIES,
-  PRODUCT_CURRENCY_TYPES,
-  PRODUCT_ACTIONS,
-} = require('../constants/productConstants');
-const {ProductsResponsesFactory} = require('../factories');
-const ProductCategoriesModel = require('../models/ProductCategoriesModel');
-const ProductsModel = require('../models/ProductsModel');
+  VehiclesResponsesFactory,
+  VehiclesErrorsFactory,
+} = require('../factories');
 const {FileServices, GeneralServices} = require('../services');
 const {getCurrentTimestamp} = require('../utils/dateUtils');
-const {prepareProductsData} = require('../utils/productsUtils');
+const {prepareVehiclesData} = require('../utils/vehiclesUtils');
+const VehiclesModel = require('../models/VehiclesModel');
 
-module.exports = class ProductsController {
-  static async addNewProduct(req, res, next) {
+module.exports = class VehiclesController {
+  static async addNewVehicle(req, res, next) {
     const data = req.body;
     const loggedInUser = req.jwtToken.user;
 
     let session;
     let awsFileKeys = [];
-    let createdProductId;
-    let productImages = [];
+    let createdVehicleId;
+    let vehicleImages = [];
+
+    if (req?.files && req.files.length < 3)
+      return next(VehiclesErrorsFactory.vehicleLessImagesErr());
 
     try {
-      const {doc: retrievedCategory, error: categoryRetrievedError} =
-        await GeneralServices.findOne({
-          model: ProductCategoriesModel,
-          query: {name: PRODUCT_CATEGORIES.car.value},
-        });
-
-      if (categoryRetrievedError) throw categoryRetrievedError;
-
-      data.categoryId = retrievedCategory._id;
       data.creatorId = loggedInUser._id;
-      data.currency = PRODUCT_CURRENCY_TYPES.usd.value;
-      data.timestamps = getCurrentTimestamp();
       data.events = [
         {
-          action: PRODUCT_ACTIONS.created.value,
+          action: VEHICLE_ACTIONS.created.value,
           userId: loggedInUser._id,
           timestamp: getCurrentTimestamp(),
         },
@@ -48,42 +39,42 @@ module.exports = class ProductsController {
       session = await mongoose.startSession();
       session.startTransaction();
 
-      const {doc: createdProduct, error: productCreationError} =
+      const {doc: createdVehicle, error: vehicleCreationError} =
         await GeneralServices.create({
-          model: ProductsModel,
+          model: VehiclesModel,
           data: data,
           session,
         });
 
-      if (productCreationError) throw productCreationError;
+      if (vehicleCreationError) throw vehicleCreationError;
 
-      createdProductId = createdProduct._id;
+      createdVehicleId = createdVehicle._id;
 
       if (req?.files && req.files.length > 0) {
         let profileImage;
         for (const file of req.files) {
           profileImage = await FileServices.uploadSingleFile({
             file: file,
-            fileDir: `profile-image_${createdProduct._id}`,
+            fileDir: `profile-image_${createdVehicle._id}`,
           });
 
           awsFileKeys.push(profileImage.key);
-          productImages.push(profileImage);
+          vehicleImages.push(profileImage);
         }
       }
 
-      createdProduct.images = productImages;
-      await createdProduct.save({session});
+      createdVehicle.images = vehicleImages;
+      await createdVehicle.save({session});
 
       await session.commitTransaction();
       session.endSession();
 
-      return next(ProductsResponsesFactory.productAddedSuccessfully());
+      return next(VehiclesResponsesFactory.vehicleAddedSuccessfully());
     } catch (error) {
       if (awsFileKeys.length > 0) {
         for (const awsFileKey of awsFileKeys) {
           await FileServices.deleteFile({
-            key: `profile-image_${createdProductId}/${awsFileKey}`,
+            key: `profile-image_${createdVehicleId}/${awsFileKey}`,
           });
         }
       }
@@ -97,7 +88,7 @@ module.exports = class ProductsController {
     }
   }
 
-  static async getAllProducts(req, res, next) {
+  static async getAllVehicles(req, res, next) {
     const limit =
       parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
 
@@ -107,7 +98,7 @@ module.exports = class ProductsController {
     const skip = (page - 1) * limit;
 
     const {count, error: countErr} = await GeneralServices.countDocuments({
-      model: ProductsModel,
+      model: VehiclesModel,
       query: {},
     });
 
@@ -117,7 +108,7 @@ module.exports = class ProductsController {
       ...(req.query.search && {
         $or: [
           {
-            title: {
+            model: {
               $regex: req.query.search.trim(),
               $options: 'i',
             },
@@ -126,9 +117,9 @@ module.exports = class ProductsController {
       }),
     };
 
-    const {docs: retrievedProducts, error: productsRetrievedError} =
+    const {docs: retrievedVehicles, error: vehiclesRetrievedError} =
       await GeneralServices.find({
-        model: ProductsModel,
+        model: VehiclesModel,
         query,
         options: {
           ...req.getUsersInclusionOptions,
@@ -140,19 +131,40 @@ module.exports = class ProductsController {
         },
       });
 
-    if (productsRetrievedError) throw productsRetrievedError;
+    if (vehiclesRetrievedError) throw vehiclesRetrievedError;
 
-    const preparedProducts = prepareProductsData({
-      data: retrievedProducts,
+    const preparedVehicles = prepareVehiclesData({
+      data: retrievedVehicles,
     });
 
     return next(
-      ProductsResponsesFactory.productsRetrievedSuccessfully({
-        products: preparedProducts,
+      VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
+        vehicles: preparedVehicles,
         count,
         page,
         limit,
         totalPages: Math.ceil(count / limit),
+      })
+    );
+  }
+
+  static async getVehicle(req, res, next) {
+    const vehicleId = req.params.id;
+
+    const {doc: retrievedVehicle, error: gettingVehicleErr} =
+      await GeneralServices.findOne({
+        model: VehiclesModel,
+        query: {_id: vehicleId},
+      });
+
+    if (gettingVehicleErr) throw gettingVehicleErr;
+
+    if (!retrievedVehicle)
+      return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
+    return next(
+      VehiclesResponsesFactory.vehicleRetrievedSuccessfully({
+        vehicle: retrievedVehicle,
       })
     );
   }
