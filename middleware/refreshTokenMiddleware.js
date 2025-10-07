@@ -34,6 +34,8 @@ module.exports = (data, req, res, next) => {
   const token = jwtUtils.generateToken({payload});
   const BASE_URL = config.get('frontendURL');
   console.log('BASE_URL', BASE_URL);
+
+  console.log('token', token);
   const cookieDomain = getCookieDomain(BASE_URL);
 
   console.log('cookieDomain', cookieDomain);
@@ -46,6 +48,8 @@ module.exports = (data, req, res, next) => {
     maxAge: generalConstant.cookieExpirationTime,
     domain: cookieDomain,
   };
+
+  console.log('abc', config.get('tokenVariable'), token, cookiesOpts);
 
   res.cookie(config.get('tokenVariable'), token, cookiesOpts);
 
