@@ -1,9 +1,9 @@
 const {GeneralErrorsFactory} = require('../factories');
+const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const jwtUtils = require('../utils/jwtUtils');
-const config = require('config');
 
 module.exports = (req, res, next) => {
-  const cookie = req.cookies[config.get('tokenVariable')];
+  const cookie = req.cookies[getTokenHeaderName()];
   const token = jwtUtils.verifyToken({token: cookie});
 
   if (token) {

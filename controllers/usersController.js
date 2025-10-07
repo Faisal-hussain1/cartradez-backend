@@ -14,6 +14,7 @@ const {UsersServices, GeneralServices} = require('../services');
 const {jwtUtils, createOptions, getLocaleFromCookie} = require('../utils');
 const actions = require('../utils/actions');
 const {getCookieDomain} = require('../utils/urlUtils');
+const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 
 module.exports = class UsersController {
   static async createUser(req, res, next) {
@@ -322,7 +323,7 @@ module.exports = class UsersController {
   static async logout(req, res, next) {
     const BASE_URL = config.get('frontendURL');
     const cookieDomain = getCookieDomain({url: BASE_URL});
-    const cookieName = config.get('tokenVariable');
+    const cookieName = getTokenHeaderName();
 
     res.clearCookie(cookieName, {
       domain: cookieDomain,

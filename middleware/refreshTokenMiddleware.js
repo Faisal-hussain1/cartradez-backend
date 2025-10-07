@@ -5,6 +5,7 @@ const {jwtUtils} = require('../utils');
 const {getCookieDomain} = require('../utils/urlUtils');
 const {AppError} = require('../factories');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
+const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 
 module.exports = (data, req, res, next) => {
   if (data instanceof AppError) return next(data);
@@ -29,16 +30,10 @@ module.exports = (data, req, res, next) => {
     },
   };
 
-  console.log('payload', payload);
-
   const token = jwtUtils.generateToken({payload});
   const BASE_URL = config.get('frontendURL');
-  console.log('BASE_URL', BASE_URL);
 
-  console.log('token', token);
-  const cookieDomain = getCookieDomain(BASE_URL);
-
-  console.log('cookieDomain', cookieDomain);
+  const cookieDomain = getCookieDomain({url: BASE_URL});
 
   // Setting cookies
   const cookiesOpts = {
@@ -49,9 +44,7 @@ module.exports = (data, req, res, next) => {
     domain: cookieDomain,
   };
 
-  console.log('abc', config.get('tokenVariable'), token, cookiesOpts);
-
-  res.cookie(config.get('tokenVariable'), token, cookiesOpts);
+  res.cookie(getTokenHeaderName(), token, cookiesOpts);
 
   delete data.body.isLoginRequest; // This is only used for creating jwt, no need to send it to the client
 
