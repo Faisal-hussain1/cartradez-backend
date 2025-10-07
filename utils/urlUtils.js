@@ -12,8 +12,8 @@ const {URL} = require('url');
  * Examples:
  *
  * Case 1: Standard domains (slice(-2))
- * "app.cartradez.com" -> ['app', 'cartradez', 'com']
- * - slice(-2): ['cartradez', 'com'] -> "cartradez.com"
+ * "app.desolint.com" -> ['app', 'desolint', 'com']
+ * - slice(-2): ['desolint', 'com'] -> "desolint.com"
  *
  * "blog.example.com" -> ['blog', 'example', 'com']
  * - slice(-2): ['example', 'com'] -> "example.com"
@@ -28,11 +28,11 @@ const {URL} = require('url');
  * - slice(-3): ['portal', 'com', 'au'] -> "portal.com.au" (correct)
  *
  * Examples:
- * getDomainInfo({ url: "https://app.cartradez.com" })
- * -> { domain: "app.cartradez.com", baseDomain: "cartradez.com", isSubdomain: true, port: null,  pathname: "/", protocol: "https" }
+ * getDomainInfo({ url: "https://app.desolint.com" })
+ * -> { domain: "app.desolint.com", baseDomain: "desolint.com", isSubdomain: true, port: null,  pathname: "/", protocol: "https" }
  *
- * getDomainInfo({ url: "https://cartradez.com" })
- * -> { domain: "cartradez.com", baseDomain: "cartradez.com", isSubdomain: false, port: null,  pathname: "/", protocol: "https" }
+ * getDomainInfo({ url: "https://desolint.com" })
+ * -> { domain: "desolint.com", baseDomain: "desolint.com", isSubdomain: false, port: null,  pathname: "/", protocol: "https" }
  *
  * getDomainInfo({ url: "https://blog.example.co.uk" })
  * -> { domain: "blog.example.co.uk", baseDomain: "example.co.uk", isSubdomain: true, port: null,  pathname: "/", protocol: "https" }
@@ -90,16 +90,15 @@ const getDomainInfo = ({url}) => {
  * If the URL has a subdomain, it prepends a dot (.) to the domain.
  *
  * Examples:
- * getCookieDomain("https://app.cartradez.com") -> ".cartradez.com"
- * getCookieDomain("https://cartradez.com") -> "cartradez.com"
+ * getCookieDomain("https://app.desolint.com") -> ".desolint.com"
+ * getCookieDomain("https://desolint.com") -> "desolint.com"
  * getCookieDomain("https://blog.example.co.uk") -> ".example.co.uk"
  */
 const getCookieDomain = (url) => {
-  const {baseDomain} = getDomainInfo({url});
+  const {baseDomain, isSubdomain} = getDomainInfo({url});
+  const cookieDomain = isSubdomain ? `.${baseDomain}` : baseDomain;
 
-  // const cookieDomain = isSubdomain ? `.${baseDomain}` : baseDomain;
-
-  return `.${baseDomain}`;
+  return cookieDomain;
 };
 
 module.exports = {getDomainInfo, getCookieDomain};
