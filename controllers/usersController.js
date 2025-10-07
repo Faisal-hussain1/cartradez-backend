@@ -249,7 +249,7 @@ module.exports = class UsersController {
     if (!isSuccessful) throw error;
 
     if (!userToLogin || !userToLogin.password)
-      throw UsersErrorsFactory.wrongEmailOrPasswordErr();
+      return next(UsersErrorsFactory.wrongEmailOrPasswordErr());
 
     const {
       success,
@@ -262,9 +262,11 @@ module.exports = class UsersController {
 
     if (!success) throw verificationError;
 
-    if (!isPasswordVerified) throw UsersErrorsFactory.wrongEmailOrPasswordErr();
+    if (!isPasswordVerified)
+      return next(UsersErrorsFactory.wrongEmailOrPasswordErr());
 
-    if (!userToLogin.isVerified) throw UsersErrorsFactory.userNotVerifiedErr();
+    if (!userToLogin.isVerified)
+      return next(UsersErrorsFactory.userNotVerifiedErr());
 
     userToLogin.password = undefined;
 
