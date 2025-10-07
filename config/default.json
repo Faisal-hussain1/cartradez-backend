@@ -6,6 +6,7 @@
     "prod": "production",
     "test": "test"
   },
+  "projectName": "cartradez",
   "tokenVariable": "x-auth-token",
   "awakeJobFrequencyInMinutes": "10",
   "windowSizeInMinutes": 1,
