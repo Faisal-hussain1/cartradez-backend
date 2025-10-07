@@ -1,11 +1,10 @@
 const request = require('supertest');
-
 const app = require('../../app');
 const config = require('config');
 
 const tokenVariable = config.get('tokenVariable');
 
-function extractTokenFromCookies({cookies}) {
+function extractTokenFromCookies(cookies) {
   if (!cookies) return null;
 
   const tokenCookie = cookies.find((cookie) =>
@@ -21,9 +20,7 @@ const postRequest = async ({requestUrl, payload = {}, token}) => {
     .send(payload)
     .set('Cookie', `${tokenVariable}=${token}`);
 
-  response.responseToken = extractTokenFromCookies({
-    cookies: response.get('set-cookie'),
-  });
+  response.responseToken = extractTokenFromCookies(response.get('set-cookie'));
 
   return response;
 };
@@ -33,9 +30,7 @@ const getRequest = async ({requestUrl, token}) => {
     .get(`${requestUrl}`)
     .set('Cookie', `${tokenVariable}=${token}`);
 
-  response.responseToken = extractTokenFromCookies({
-    cookies: response.get('set-cookie'),
-  });
+  response.responseToken = extractTokenFromCookies(response.get('set-cookie'));
 
   return response;
 };
@@ -46,9 +41,7 @@ const putRequest = async ({requestUrl, payload = {}, token}) => {
     .send(payload)
     .set('Cookie', `${tokenVariable}=${token}`);
 
-  response.responseToken = extractTokenFromCookies({
-    cookies: response.get('set-cookie'),
-  });
+  response.responseToken = extractTokenFromCookies(response.get('set-cookie'));
 
   return response;
 };
@@ -59,9 +52,7 @@ const patchRequest = async ({requestUrl, payload = {}, token}) => {
     .send(payload)
     .set('Cookie', `${tokenVariable}=${token}`);
 
-  response.responseToken = extractTokenFromCookies({
-    cookies: response.get('set-cookie'),
-  });
+  response.responseToken = extractTokenFromCookies(response.get('set-cookie'));
 
   return response;
 };
@@ -71,9 +62,7 @@ const deleteRequest = async ({requestUrl, token}) => {
     .delete(`${requestUrl}`)
     .set('Cookie', `${tokenVariable}=${token}`);
 
-  response.responseToken = extractTokenFromCookies({
-    cookies: response.get('set-cookie'),
-  });
+  response.responseToken = extractTokenFromCookies(response.get('set-cookie'));
 
   return response;
 };

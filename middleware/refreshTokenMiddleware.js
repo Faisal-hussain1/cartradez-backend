@@ -33,6 +33,8 @@ module.exports = (data, req, res, next) => {
   const BASE_URL = config.get('frontendURL');
   const cookieDomain = getCookieDomain(BASE_URL);
 
+  console.log('cookieDomain', cookieDomain);
+
   // Setting cookies
   const cookiesOpts = {
     httpOnly: true,
