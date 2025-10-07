@@ -7,11 +7,8 @@
     "test": "test"
   },
   "tokenVariable": "x-auth-token",
-  "projectName": "cartradez",
-  "locale": "NEXTJS_LOCALE",
   "awakeJobFrequencyInMinutes": "10",
   "windowSizeInMinutes": 1,
   "maxRequestsAllowed": 30,
-  "socket": "socketIo",
-  "sentryDsn": "https://803271c729afb69c3765647abb95f4f0@o4509881753927680.ingest.us.sentry.io/4509881758056448"
+  "socket": "socketIo"
 }
