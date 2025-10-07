@@ -29,8 +29,11 @@ module.exports = (data, req, res, next) => {
     },
   };
 
+  console.log('payload', payload);
+
   const token = jwtUtils.generateToken({payload});
   const BASE_URL = config.get('frontendURL');
+  console.log('BASE_URL', BASE_URL);
   const cookieDomain = getCookieDomain(BASE_URL);
 
   console.log('cookieDomain', cookieDomain);
@@ -43,6 +46,7 @@ module.exports = (data, req, res, next) => {
     maxAge: generalConstant.cookieExpirationTime,
     domain: cookieDomain,
   };
+
   res.cookie(config.get('tokenVariable'), token, cookiesOpts);
 
   delete data.body.isLoginRequest; // This is only used for creating jwt, no need to send it to the client
