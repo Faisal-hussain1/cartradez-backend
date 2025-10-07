@@ -1,10 +1,11 @@
-// const config = require('config');
+const config = require('config');
 
 const {generalConstant} = require('../constants');
 const {jwtUtils} = require('../utils');
 const {AppError} = require('../factories');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
 const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
+const {getCookieDomain} = require('../utils/urlUtils');
 
 module.exports = (data, req, res, next) => {
   if (data instanceof AppError) return next(data);
@@ -31,9 +32,9 @@ module.exports = (data, req, res, next) => {
 
   const token = jwtUtils.generateToken({payload});
 
-  // const BASE_URL = config.get('frontendURL');
+  const BASE_URL = config.get('frontendURL');
 
-  // const cookieDomain = getCookieDomain({url: BASE_URL});
+  const cookieDomain = getCookieDomain({url: BASE_URL});
 
   // Setting cookies
   const cookiesOpts = {
@@ -41,7 +42,7 @@ module.exports = (data, req, res, next) => {
     secure: true,
     sameSite: 'None',
     maxAge: generalConstant.cookieExpirationTime,
-    domain: '.cartradez.com',
+    domain: cookieDomain,
   };
 
   res.cookie(getTokenHeaderName(), token, cookiesOpts);
