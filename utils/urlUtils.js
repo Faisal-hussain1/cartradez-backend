@@ -95,10 +95,11 @@ const getDomainInfo = ({url}) => {
  * getCookieDomain("https://blog.example.co.uk") -> ".example.co.uk"
  */
 const getCookieDomain = (url) => {
-  const {baseDomain, isSubdomain} = getDomainInfo({url});
-  const cookieDomain = isSubdomain ? `.${baseDomain}` : baseDomain;
+  const {baseDomain} = getDomainInfo({url});
 
-  return cookieDomain;
+  // const cookieDomain = isSubdomain ? `.${baseDomain}` : baseDomain;
+
+  return `.${baseDomain}`;
 };
 
 module.exports = {getDomainInfo, getCookieDomain};
