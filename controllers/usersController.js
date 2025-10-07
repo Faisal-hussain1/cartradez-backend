@@ -13,7 +13,6 @@ const {PermissionsModel, UsersModel} = require('../models');
 const {UsersServices, GeneralServices} = require('../services');
 const {jwtUtils, createOptions, getLocaleFromCookie} = require('../utils');
 const actions = require('../utils/actions');
-const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const {getCookieDomain} = require('../utils/urlUtils');
 
 module.exports = class UsersController {
@@ -321,7 +320,7 @@ module.exports = class UsersController {
   static async logout(req, res, next) {
     const BASE_URL = config.get('frontendURL');
     const cookieDomain = getCookieDomain({url: BASE_URL});
-    const cookieName = getTokenHeaderName();
+    const cookieName = config.get('tokenVariable');
 
     res.clearCookie(cookieName, {
       domain: cookieDomain,

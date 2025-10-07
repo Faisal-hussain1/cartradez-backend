@@ -2,7 +2,6 @@ const config = require('config');
 const jwt = require('jsonwebtoken');
 
 const {generalConstant} = require('../constants');
-const {getTokenHeaderName} = require('./getTokenHeaderUtils');
 
 module.exports.generateToken = ({payload, expiry}) => {
   const secret = config.get('jwtPrivateKey');
@@ -34,5 +33,5 @@ module.exports.getToken = ({cookieStr}) => {
     return prev;
   }, {});
 
-  return cookies[getTokenHeaderName()];
+  return cookies[config.get('tokenVariable')];
 };

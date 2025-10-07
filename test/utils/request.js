@@ -1,9 +1,9 @@
 const request = require('supertest');
 
 const app = require('../../app');
-const {getTokenHeaderName} = require('../../utils/getTokenHeaderUtils');
+const config = require('config');
 
-const tokenVariable = getTokenHeaderName();
+const tokenVariable = config.get('tokenVariable');
 
 function extractTokenFromCookies({cookies}) {
   if (!cookies) return null;
