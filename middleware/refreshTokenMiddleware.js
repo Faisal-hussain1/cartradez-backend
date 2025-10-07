@@ -2,7 +2,6 @@ const config = require('config');
 
 const {generalConstant} = require('../constants');
 const {jwtUtils, checkErrorType} = require('../utils');
-const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const {getCookieDomain} = require('../utils/urlUtils');
 
 module.exports = (data, req, res, next) => {
@@ -21,7 +20,7 @@ module.exports = (data, req, res, next) => {
   };
   const token = jwtUtils.generateToken({payload});
   const BASE_URL = config.get('frontendURL');
-  const cookieDomain = getCookieDomain({url: BASE_URL});
+  const cookieDomain = getCookieDomain(BASE_URL);
 
   // Setting cookies
   const cookiesOpts = {
@@ -31,7 +30,7 @@ module.exports = (data, req, res, next) => {
     maxAge: generalConstant.cookieExpirationTime,
     domain: cookieDomain,
   };
-  res.cookie(getTokenHeaderName(), token, cookiesOpts);
+  res.cookie(config.get('tokenVariable'), token, cookiesOpts);
 
   delete data.body.isLoginRequest; // This is only used for creating jwt, no need to send it to the client
 
