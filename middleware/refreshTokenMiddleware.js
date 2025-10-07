@@ -1,23 +1,34 @@
 const config = require('config');
 
 const {generalConstant} = require('../constants');
-const {jwtUtils, checkErrorType} = require('../utils');
+const {jwtUtils} = require('../utils');
 const {getCookieDomain} = require('../utils/urlUtils');
+const AppError = require('../factories/errors/AppError');
+const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
 module.exports = (data, req, res, next) => {
-  const {isAppError, isError} = checkErrorType({error: data});
-
-  if (isError || isAppError) return next(data);
+  if (data instanceof AppError) return next(data);
 
   const jwtData = req.jwtToken;
 
   // If there is no jwt token and is not login requested
   if (!jwtData && !data.body.isLoginRequest) return next(data);
 
+  let userObj = jwtData ? jwtData.user : data.body.user;
+
   // Prepare the jwt token
-  const payload = {
-    user: jwtData ? jwtData.user : data.body.user,
+  let payload = {
+    user: {
+      _id: userObj._id,
+      email: userObj.email,
+      firstName: userObj.firstName,
+      lastName: userObj.lastName,
+      currentActiveOrganization: userObj.currentActiveOrganization,
+      ...(userObj.currentActiveOrganization.role === SYSTEM_ROLES.admin.value &&
+        {}),
+    },
   };
+
   const token = jwtUtils.generateToken({payload});
   const BASE_URL = config.get('frontendURL');
   const cookieDomain = getCookieDomain(BASE_URL);

@@ -94,7 +94,7 @@ const getDomainInfo = ({url}) => {
  * getCookieDomain("https://cartradez.com") -> "cartradez.com"
  * getCookieDomain("https://blog.example.co.uk") -> ".example.co.uk"
  */
-const getCookieDomain = ({url}) => {
+const getCookieDomain = (url) => {
   const {baseDomain, isSubdomain} = getDomainInfo({url});
   const cookieDomain = isSubdomain ? `.${baseDomain}` : baseDomain;
 

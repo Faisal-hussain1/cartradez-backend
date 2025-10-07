@@ -2,7 +2,6 @@ const config = require('config');
 const mongoose = require('mongoose');
 
 const {DEFAULT_LANGUAGE} = require('../constants/usersConstants');
-const AppError = require('../factories/errors/AppError');
 
 module.exports.isEnvProd =
   config.get('env') === config.get('envVariables.prod');
@@ -49,13 +48,6 @@ module.exports.convertMongoIdsInQuery = ({query = {}}) => {
   }
 
   return newQuery;
-};
-
-module.exports.checkErrorType = ({error}) => {
-  const isAppError = error instanceof AppError;
-  const isError = error instanceof Error;
-
-  return {isAppError, isError};
 };
 
 module.exports.generateUrl = ({

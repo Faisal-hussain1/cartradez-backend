@@ -1,16 +1,8 @@
+const {AppError} = require('../factories');
 const logger = require('./loggerMiddleware');
 
-const {GeneralErrorsFactory} = require('../factories');
-const {checkErrorType} = require('../utils/general');
-
 module.exports = (data, req, res, next) => {
-  const {isAppError, isError} = checkErrorType({error: data});
-
-  if (!isAppError && !isError) return next(data);
-
-  logger.error(data);
-
-  if (isError && !isAppError) data = GeneralErrorsFactory.internalErr();
+  if (!(data instanceof AppError)) return next(data);
 
   data.statusCode = data.statusCode || 500;
   data.status = data.status ?? 'error';
@@ -23,6 +15,7 @@ module.exports = (data, req, res, next) => {
     message: data.message,
     error: data.internalErr?.type ? data.internalErr : undefined,
   };
+  logger.error(errData.error);
 
   return next(errData);
 };
