@@ -3,7 +3,7 @@ const config = require('config');
 const {generalConstant} = require('../constants');
 const {jwtUtils} = require('../utils');
 const {getCookieDomain} = require('../utils/urlUtils');
-const AppError = require('../factories/errors/AppError');
+const {AppError} = require('../factories');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
 module.exports = (data, req, res, next) => {
