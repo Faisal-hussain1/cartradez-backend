@@ -9,5 +9,8 @@
   "awsAccessKey": "AWS_ACCESS_KEY",
   "awsSecretAccessKey": "AWS_SECRET_ACCESS_KEY",
   "awsBucket": "AWS_BUCKET",
-  "awsBucketRegion": "AWS_BUCKET_REGION"
+  "awsBucketRegion": "AWS_BUCKET_REGION",
+  "sendGridApiKey": "SENDGRID_API_KEY",
+  "defaultEmailName": "DEFAULT_EMAIL_NAME",
+  "defaultEmailAddress": "DEFAULT_EMAIL_ADDRESS"
 }

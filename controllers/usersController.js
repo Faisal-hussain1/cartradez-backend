@@ -15,6 +15,7 @@ const {jwtUtils, createOptions, getLocaleFromCookie} = require('../utils');
 const actions = require('../utils/actions');
 const {getCookieDomain} = require('../utils/urlUtils');
 const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
+const {LOCALES} = require('../constants/generalConstant');
 
 module.exports = class UsersController {
   static async createUser(req, res, next) {
@@ -104,6 +105,7 @@ module.exports = class UsersController {
       if (session) session.endSession();
     }
   }
+
   static async inviteUser(req, res, next) {
     const {email, role} = req.body;
     const token = req.jwtToken;
@@ -194,6 +196,7 @@ module.exports = class UsersController {
       if (session) session.endSession(); // Ensure the session is always ended
     }
   }
+
   static async verifyInvitedUser(req, res, next) {
     const {password, firstName, lastName} = req.body;
     const token = req.params.token;
@@ -291,11 +294,10 @@ module.exports = class UsersController {
     const resetToken = user.generateResetToken();
     await user.save();
 
-    await actions.users.resetPassword({
-      user,
-      resetToken,
-      locale: getLocaleFromCookie({req}),
-    });
+    const domain = config.get('frontendURL');
+    const url = `${domain}/${LOCALES.en.value}/auth/reset/${resetToken}`;
+
+    await actions.users.resetPassword({user, resetUrl: url});
 
     next(UsersResponsesFactory.resetPasswordLinkGeneratedSuccessfully());
   }

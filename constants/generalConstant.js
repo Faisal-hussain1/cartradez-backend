@@ -16,3 +16,9 @@ module.exports.TIME_ZONES = {
     value: 'utc',
   },
 };
+
+module.exports.LOCALES = {
+  en: {
+    value: 'en',
+  },
+};
