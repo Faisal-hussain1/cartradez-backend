@@ -1,8 +1,10 @@
+const config = require('config');
+
 const sgMail = require('@sendgrid/mail');
 
 const {logger} = require('../../middleware');
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+sgMail.setApiKey(config.get('sendGridApiKey'));
 
 module.exports = async ({
   to,

@@ -1,13 +1,5 @@
 const emailNotificationProcesses = require('../../email/processes');
-const {generateUrl} = require('../../general');
 
-module.exports = async ({user, resetToken, locale}) => {
-  const resetUrl = generateUrl({
-    path: 'auth/reset',
-    locale,
-    params: resetToken,
-  });
+module.exports = async ({user, resetUrl}) => {
   await emailNotificationProcesses.resetPassword({user, resetUrl});
-
-  return resetUrl;
 };

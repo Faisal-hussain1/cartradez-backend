@@ -13,7 +13,7 @@ module.exports = (data, req, res, next) => {
   const jwtData = req.jwtToken;
 
   // If there is no jwt token and is not login requested
-  if (!jwtData && !data.body.isLoginRequest) return next(data);
+  if (!jwtData && !data.body?.isLoginRequest) return next(data);
 
   let userObj = jwtData ? jwtData.user : data.body.user;
 
