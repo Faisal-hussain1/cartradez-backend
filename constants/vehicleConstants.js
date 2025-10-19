@@ -1,17 +1,251 @@
+const VEHICLE_MAKES = {
+  toyota: {value: 'toyota', label: 'Toyota'},
+  honda: {value: 'honda', label: 'Honda'},
+  bmw: {value: 'bmw', label: 'BMW'},
+  mercedes: {value: 'mercedes', label: 'Mercedes-Benz'},
+  audi: {value: 'audi', label: 'Audi'},
+  hyundai: {value: 'hyundai', label: 'Hyundai'},
+  kia: {value: 'kia', label: 'Kia'},
+  nissan: {value: 'nissan', label: 'Nissan'},
+  suzuki: {value: 'suzuki', label: 'Suzuki'},
+  chevrolet: {value: 'chevrolet', label: 'Chevrolet'},
+  ford: {value: 'ford', label: 'Ford'},
+  volkswagen: {value: 'volkswagen', label: 'Volkswagen'},
+  mitsubishi: {value: 'mitsubishi', label: 'Mitsubishi'},
+  mazda: {value: 'mazda', label: 'Mazda'},
+  jeep: {value: 'jeep', label: 'Jeep'},
+  lexus: {value: 'lexus', label: 'Lexus'},
+  tesla: {value: 'tesla', label: 'Tesla'},
+  landrover: {value: 'landrover', label: 'Land Rover'},
+  proton: {value: 'proton', label: 'Proton'},
+  daihatsu: {value: 'daihatsu', label: 'Daihatsu'},
+  subaru: {value: 'subaru', label: 'Subaru'},
+  changan: {value: 'changan', label: 'Changan'},
+  mg: {value: 'mg', label: 'MG'},
+  peugeot: {value: 'peugeot', label: 'Peugeot'},
+  fiat: {value: 'fiat', label: 'Fiat'},
+};
+
+const VEHICLE_MAKES_VALUES = Object.values(VEHICLE_MAKES).map(
+  (make) => make.value
+);
+
+const VEHICLE_MODELS = {
+  // Toyota
+  corolla: {value: 'corolla', label: 'Corolla', make: 'toyota'},
+  yaris: {value: 'yaris', label: 'Yaris', make: 'toyota'},
+  camry: {value: 'camry', label: 'Camry', make: 'toyota'},
+  hilux: {value: 'hilux', label: 'Hilux', make: 'toyota'},
+  fortuner: {value: 'fortuner', label: 'Fortuner', make: 'toyota'},
+  prado: {value: 'prado', label: 'Prado', make: 'toyota'},
+
+  // Honda
+  civic: {value: 'civic', label: 'Civic', make: 'honda'},
+  city: {value: 'city', label: 'City', make: 'honda'},
+  brv: {value: 'brv', label: 'BR-V', make: 'honda'},
+  vezel: {value: 'vezel', label: 'Vezel', make: 'honda'},
+
+  // Suzuki
+  mehran: {value: 'mehran', label: 'Mehran', make: 'suzuki'},
+  alto: {value: 'alto', label: 'Alto', make: 'suzuki'},
+  cultus: {value: 'cultus', label: 'Cultus', make: 'suzuki'},
+  wagonr: {value: 'wagonr', label: 'Wagon R', make: 'suzuki'},
+  swift: {value: 'swift', label: 'Swift', make: 'suzuki'},
+  bolan: {value: 'bolan', label: 'Bolan', make: 'suzuki'},
+
+  // Hyundai
+  elantra: {value: 'elantra', label: 'Elantra', make: 'hyundai'},
+  sonata: {value: 'sonata', label: 'Sonata', make: 'hyundai'},
+  tucson: {value: 'tucson', label: 'Tucson', make: 'hyundai'},
+
+  // Kia
+  sportage: {value: 'sportage', label: 'Sportage', make: 'kia'},
+  picanto: {value: 'picanto', label: 'Picanto', make: 'kia'},
+  stonic: {value: 'stonic', label: 'Stonic', make: 'kia'},
+
+  // Nissan
+  sunny: {value: 'sunny', label: 'Sunny', make: 'nissan'},
+  note: {value: 'note', label: 'Note', make: 'nissan'},
+  patrol: {value: 'patrol', label: 'Patrol', make: 'nissan'},
+
+  // BMW
+  x1: {value: 'x1', label: 'BMW X1', make: 'bmw'},
+  x5: {value: 'x5', label: 'BMW X5', make: 'bmw'},
+  '3series': {value: '3series', label: 'BMW 3 Series', make: 'bmw'},
+  '5series': {value: '5series', label: 'BMW 5 Series', make: 'bmw'},
+
+  // Mercedes
+  cclass: {value: 'cclass', label: 'C-Class', make: 'mercedes'},
+  eclass: {value: 'eclass', label: 'E-Class', make: 'mercedes'},
+  sclass: {value: 'sclass', label: 'S-Class', make: 'mercedes'},
+  gla: {value: 'gla', label: 'GLA', make: 'mercedes'},
+
+  // Audi
+  a3: {value: 'a3', label: 'A3', make: 'audi'},
+  a4: {value: 'a4', label: 'A4', make: 'audi'},
+  a6: {value: 'a6', label: 'A6', make: 'audi'},
+  q7: {value: 'q7', label: 'Q7', make: 'audi'},
+
+  // Mitsubishi
+  lancer: {value: 'lancer', label: 'Lancer', make: 'mitsubishi'},
+  pajero: {value: 'pajero', label: 'Pajero', make: 'mitsubishi'},
+  mirage: {value: 'mirage', label: 'Mirage', make: 'mitsubishi'},
+};
+
+const VEHICLE_MODELS_VALUES = Object.values(VEHICLE_MODELS).map(
+  (model) => model.value
+);
+
+const VEHICLE_VARIANTS = {
+  // Toyota Corolla
+  corolla_xli: {value: 'corolla_xli', label: 'Corolla XLi', model: 'corolla'},
+  corolla_gli: {value: 'corolla_gli', label: 'Corolla GLi', model: 'corolla'},
+  corolla_altis: {
+    value: 'corolla_altis',
+    label: 'Corolla Altis',
+    model: 'corolla',
+  },
+  corolla_altis_grande: {
+    value: 'corolla_altis_grande',
+    label: 'Corolla Altis Grande',
+    model: 'corolla',
+  },
+
+  // Honda Civic
+  civic_orsiel: {value: 'civic_orsiel', label: 'Civic Oriel', model: 'civic'},
+  civic_turbo: {value: 'civic_turbo', label: 'Civic Turbo', model: 'civic'},
+  civic_rs: {value: 'civic_rs', label: 'Civic RS', model: 'civic'},
+
+  // Suzuki Alto
+  alto_vxr: {value: 'alto_vxr', label: 'Alto VXR', model: 'alto'},
+  alto_vxl: {value: 'alto_vxl', label: 'Alto VXL', model: 'alto'},
+  alto_vx: {value: 'alto_vx', label: 'Alto VX', model: 'alto'},
+
+  // Suzuki Cultus
+  cultus_vxr: {value: 'cultus_vxr', label: 'Cultus VXR', model: 'cultus'},
+  cultus_vxl: {value: 'cultus_vxl', label: 'Cultus VXL', model: 'cultus'},
+  cultus_ag: {value: 'cultus_ag', label: 'Cultus Auto Gear', model: 'cultus'},
+
+  // Toyota Yaris
+  yaris_ativ: {value: 'yaris_ativ', label: 'Yaris ATIV', model: 'yaris'},
+  yaris_ativx: {value: 'yaris_ativx', label: 'Yaris ATIV X', model: 'yaris'},
+  yaris_glx: {value: 'yaris_glx', label: 'Yaris GLX', model: 'yaris'},
+
+  // Kia Sportage
+  sportage_alpha: {
+    value: 'sportage_alpha',
+    label: 'Sportage Alpha',
+    model: 'sportage',
+  },
+  sportage_fwd: {
+    value: 'sportage_fwd',
+    label: 'Sportage FWD',
+    model: 'sportage',
+  },
+  sportage_awd: {
+    value: 'sportage_awd',
+    label: 'Sportage AWD',
+    model: 'sportage',
+  },
+
+  // Hyundai Tucson
+  tucson_fwd: {value: 'tucson_fwd', label: 'Tucson FWD', model: 'tucson'},
+  tucson_awd: {value: 'tucson_awd', label: 'Tucson AWD', model: 'tucson'},
+  tucson_signature: {
+    value: 'tucson_signature',
+    label: 'Tucson Signature',
+    model: 'tucson',
+  },
+
+  // Suzuki Swift
+  swift_gl: {value: 'swift_gl', label: 'Swift GL', model: 'swift'},
+  swift_glx: {value: 'swift_glx', label: 'Swift GLX', model: 'swift'},
+
+  // Honda City
+  city_aspire: {value: 'city_aspire', label: 'City Aspire', model: 'city'},
+  city_15: {value: 'city_15', label: 'City 1.5L', model: 'city'},
+  city_12: {value: 'city_12', label: 'City 1.2L', model: 'city'},
+};
+
+const VEHICLE_VARIANTS_VALUES = Object.values(VEHICLE_VARIANTS).map(
+  (variant) => variant.value
+);
+
+const VEHICLE_CONDITIONS = {
+  new: {
+    value: 'new',
+    label: 'New',
+  },
+  used: {
+    value: 'used',
+    label: 'Used',
+  },
+};
+
+const VEHICLE_CONDITIONS_VALUES = Object.values(VEHICLE_CONDITIONS).map(
+  (role) => role.value
+);
+
+const VEHICLE_COLORS = {
+  white: {value: 'white', label: 'White'},
+  black: {value: 'black', label: 'Black'},
+  silver: {value: 'silver', label: 'Silver'},
+  grey: {value: 'grey', label: 'Grey'},
+  blue: {value: 'blue', label: 'Blue'},
+  red: {value: 'red', label: 'Red'},
+  maroon: {value: 'maroon', label: 'Maroon'},
+  green: {value: 'green', label: 'Green'},
+  beige: {value: 'beige', label: 'Beige'},
+  brown: {value: 'brown', label: 'Brown'},
+  gold: {value: 'gold', label: 'Gold'},
+  yellow: {value: 'yellow', label: 'Yellow'},
+  orange: {value: 'orange', label: 'Orange'},
+  purple: {value: 'purple', label: 'Purple'},
+  pink: {value: 'pink', label: 'Pink'},
+  navy: {value: 'navy', label: 'Navy Blue'},
+  skyblue: {value: 'skyblue', label: 'Sky Blue'},
+  champagne: {value: 'champagne', label: 'Champagne'},
+  bronze: {value: 'bronze', label: 'Bronze'},
+  others: {value: 'others', label: 'Other Color'},
+};
+
+const VEHICLE_COLORS_VALUES = Object.values(VEHICLE_COLORS).map(
+  (role) => role.value
+);
+
+const VEHICLE_DRIVE = {
+  fwd: {
+    value: 'fwd',
+    label: 'Front Wheel Drive (FWD)',
+    description: 'Power is sent to the front wheels only.',
+  },
+  rwd: {
+    value: 'rwd',
+    label: 'Rear Wheel Drive (RWD)',
+    description: 'Power is sent to the rear wheels only.',
+  },
+  awd: {
+    value: 'awd',
+    label: 'All Wheel Drive (AWD)',
+    description: 'Power is automatically distributed to all wheels as needed.',
+  },
+  '4wd': {
+    value: '4wd',
+    label: 'Four Wheel Drive (4WD)',
+    description:
+      'Power can be manually distributed to all four wheels for off-road driving.',
+  },
+};
+
+const VEHICLE_DRIVE_VALUES = Object.values(VEHICLE_DRIVE).map(
+  (driveType) => driveType.value
+);
+
 const VEHICLE_CATEGORIES = {
   car: {value: 'car'},
 };
 
 const VEHICLE_CATEGORIES_VALUES = Object.values(VEHICLE_CATEGORIES).map(
-  (role) => role.value
-);
-
-const VEHICLE_CONDITIONS = {
-  new: {value: 'new'},
-  used: {value: 'used'},
-};
-
-const VEHICLE_CONDITIONS_VALUES = Object.values(VEHICLE_CONDITIONS).map(
   (role) => role.value
 );
 
@@ -67,344 +301,6 @@ const VEHICLE_ACTIONS = {
 
 const VEHICLE_ACTIONS_VALUES = Object.values(VEHICLE_ACTIONS).map(
   (action) => action.value
-);
-
-const VEHICLE_MAKES = {
-  alfaRomeo: {
-    value: 'alfaRomeo',
-    label: 'Alfa Romeo',
-  },
-  astonMartin: {
-    value: 'astonMartin',
-    label: 'Aston Martin',
-  },
-  audi: {
-    value: 'audi',
-    label: 'Audi',
-  },
-  austin: {
-    value: 'austin',
-    label: 'Austin',
-  },
-  bentley: {
-    value: 'bentley',
-    label: 'Bentley',
-  },
-  bmw: {
-    value: 'bmw',
-    label: 'BMW',
-  },
-  buick: {
-    value: 'buick',
-    label: 'Buick',
-  },
-  byd: {
-    value: 'byd',
-    label: 'BYD',
-  },
-  cadillac: {
-    value: 'cadillac',
-    label: 'Cadillac',
-  },
-  chery: {
-    value: 'chery',
-    label: 'Chery',
-  },
-  chevrolet: {
-    value: 'chevrolet',
-    label: 'Chevrolet',
-  },
-  dsAutomobiles: {
-    value: 'dsAutomobiles',
-    label: 'DS Automobiles',
-  },
-  ferrari: {
-    value: 'ferrari',
-    label: 'Ferrari',
-  },
-  fiat: {
-    value: 'fiat',
-    label: 'Fiat',
-  },
-  ford: {
-    value: 'ford',
-    label: 'Ford',
-  },
-  foton: {
-    value: 'foton',
-    label: 'Foton',
-  },
-  geely: {
-    value: 'geely',
-    label: 'Geely',
-  },
-  genesis: {
-    value: 'genesis',
-    label: 'Genesis',
-  },
-  gmc: {
-    value: 'gmc',
-    label: 'GMC',
-  },
-  gwm: {
-    value: 'gwm',
-    label: 'GWM',
-  },
-  haval: {
-    value: 'haval',
-    label: 'HAVAL',
-  },
-  holden: {
-    value: 'holden',
-    label: 'Holden',
-  },
-  honda: {
-    value: 'honda',
-    label: 'Honda',
-  },
-  hummer: {
-    value: 'hummer',
-    label: 'Hummer',
-  },
-  hyundai: {
-    value: 'hyundai',
-    label: 'Hyundai',
-  },
-  ineos: {
-    value: 'ineos',
-    label: 'INEOS',
-  },
-  infinit: {
-    value: 'infinit',
-    label: 'INFINIT',
-  },
-  isuzu: {
-    value: 'isuzu',
-    label: 'ISUZU',
-  },
-  iveco: {
-    value: 'iveco',
-    label: 'Iveco',
-  },
-  jac: {
-    value: 'jac',
-    label: 'JAC',
-  },
-  jaecoo: {
-    value: 'jaecoo',
-    label: 'JAECOO',
-  },
-  jaguar: {
-    value: 'jaguar',
-    label: 'Jaguar',
-  },
-  jeep: {
-    value: 'jeep',
-    label: 'Jeep',
-  },
-  kgm: {
-    value: 'kgm',
-    label: 'KGM',
-  },
-  kia: {
-    value: 'kia',
-    label: 'Kia',
-  },
-  lamborghini: {
-    value: 'lamborghini',
-    label: 'Lamborghini',
-  },
-  lancia: {
-    value: 'lancia',
-    label: 'Lancia',
-  },
-  landRover: {
-    value: 'landRover',
-    label: 'Land Rover',
-  },
-  ldv: {
-    value: 'ldv',
-    label: 'LDV',
-  },
-  leapMotor: {
-    value: 'leapMotor',
-    label: 'Leap motor',
-  },
-  lexus: {
-    value: 'lexus',
-    label: 'Lexus',
-  },
-  lotus: {
-    value: 'lotus',
-    label: 'Lotus',
-  },
-  mahindra: {
-    value: 'mahindra',
-    label: 'Mahindra',
-  },
-  maserati: {
-    value: 'maserati',
-    label: 'Maserati',
-  },
-  mazda: {
-    value: 'mazda',
-    label: 'Mazda',
-  },
-  mclaren: {
-    value: 'mclaren',
-    label: 'McLaren',
-  },
-  mercedesBenz: {
-    value: 'mercedesBenz',
-    label: 'Mercedes-Benz',
-  },
-  mg: {
-    value: 'mg',
-    label: 'MG',
-  },
-  mini: {
-    value: 'mini',
-    label: 'MINI',
-  },
-  mitsubishi: {
-    value: 'mitsubishi',
-    label: 'Mitsubishi',
-  },
-  morgan: {
-    value: 'morgan',
-    label: 'Morgan',
-  },
-  morris: {
-    value: 'morris',
-    label: 'Morris',
-  },
-  nissan: {
-    value: 'nissan',
-    label: 'Nissan',
-  },
-  omoda: {
-    value: 'omoda',
-    label: 'OMODA',
-  },
-  opel: {
-    value: 'opel',
-    label: 'Opel',
-  },
-  peugeot: {
-    value: 'peugeot',
-    label: 'Peugeot',
-  },
-  polestar: {
-    value: 'polestar',
-    label: 'Polestar',
-  },
-  pontiac: {
-    value: 'pontiac',
-    label: 'Pontiac',
-  },
-  porshe: {
-    value: 'porshe',
-    label: 'Porshe',
-  },
-  ram: {
-    value: 'ram',
-    label: 'Ram',
-  },
-  renault: {
-    value: 'renault',
-    label: 'Renault',
-  },
-  riley: {
-    value: 'riley',
-    label: 'Riley',
-  },
-  rollsRoyce: {
-    value: 'rollsRoyce',
-    label: 'Rolls-Royce',
-  },
-  rover: {
-    value: 'rover',
-    label: 'Rover',
-  },
-  saab: {
-    value: 'saab',
-    label: 'Saab',
-  },
-  seat: {
-    value: 'seat',
-    label: 'SEAT',
-  },
-  skoda: {
-    value: 'skoda',
-    label: 'Skoda',
-  },
-  smart: {
-    value: 'smart',
-    label: 'Smart',
-  },
-  ssangYong: {
-    value: 'ssangYong',
-    label: 'SsangYong',
-  },
-  studebaker: {
-    value: 'studebaker',
-    label: 'Studebaker',
-  },
-  subaru: {
-    value: 'subaru',
-    label: 'Subaru',
-  },
-  suzuki: {
-    value: 'suzuki',
-    label: 'Suzuki',
-  },
-  tesla: {
-    value: 'tesla',
-    label: 'Tesla',
-  },
-  toyota: {
-    value: 'toyota',
-    label: 'Toyota',
-  },
-  triumph: {
-    value: 'triumph',
-    label: 'Triumph',
-  },
-};
-
-const VEHICLE_MAKES_VALUES = Object.values(VEHICLE_MAKES).map(
-  (make) => make.value
-);
-
-const VEHICLE_MODELS = {
-  allex: {
-    value: 'allex',
-    label: 'Allex',
-  },
-  allion: {
-    value: 'allion',
-    label: 'Allion',
-  },
-  alphard: {
-    value: 'alphard',
-    label: 'Alphard',
-  },
-  altezza: {
-    value: 'altezza',
-    label: 'Altezza',
-  },
-  altise: {
-    value: 'altise',
-    label: 'Altise',
-  },
-  aqua: {
-    value: 'aqua',
-    label: 'Aqua',
-  },
-};
-
-const VEHICLE_MODELS_VALUES = Object.values(VEHICLE_MODELS).map(
-  (model) => model.value
 );
 
 const VEHICLE_BODIES = {
@@ -481,10 +377,21 @@ const VEHICLE_CYLINDERS_VALUES = Object.values(VEHICLE_CYLINDERS).map(
 );
 
 module.exports = {
-  VEHICLE_CATEGORIES,
-  VEHICLE_CATEGORIES_VALUES,
+  VEHICLE_MAKES,
+  VEHICLE_MAKES_VALUES,
+  VEHICLE_MODELS,
+  VEHICLE_MODELS_VALUES,
+  VEHICLE_VARIANTS,
+  VEHICLE_VARIANTS_VALUES,
   VEHICLE_CONDITIONS,
   VEHICLE_CONDITIONS_VALUES,
+  VEHICLE_COLORS,
+  VEHICLE_COLORS_VALUES,
+  VEHICLE_DRIVE,
+  VEHICLE_DRIVE_VALUES,
+
+  VEHICLE_CATEGORIES,
+  VEHICLE_CATEGORIES_VALUES,
   VEHICLE_FUEL_TYPES,
   VEHICLE_FUEL_TYPES_VALUES,
   VEHICLE_CURRENCY_TYPES,
@@ -496,10 +403,6 @@ module.exports = {
   ALLOWED_FILE_TYPES,
   VEHICLE_ACTIONS,
   VEHICLE_ACTIONS_VALUES,
-  VEHICLE_MAKES,
-  VEHICLE_MAKES_VALUES,
-  VEHICLE_MODELS,
-  VEHICLE_MODELS_VALUES,
   VEHICLE_BODIES,
   VEHICLE_BODIES_VALUES,
   VEHICLE_DOORS,

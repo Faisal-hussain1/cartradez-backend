@@ -14,6 +14,10 @@ const {
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_CATEGORIES_VALUES,
   VEHICLE_ACTIONS_VALUES,
+  VEHICLE_VARIANTS_VALUES,
+  VEHICLE_CONDITIONS_VALUES,
+  VEHICLE_COLORS_VALUES,
+  VEHICLE_DRIVE_VALUES,
 } = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
@@ -22,8 +26,11 @@ const vehiclesSchema = new Schema(
   {
     make: {type: String, required: true, enum: VEHICLE_MAKES_VALUES},
     model: {type: String, required: true, enum: VEHICLE_MODELS_VALUES},
+    variant: {type: String, enum: VEHICLE_VARIANTS_VALUES},
     year: {type: Number, required: true},
-    color: {type: String, required: true},
+    condition: {type: String, required: true, enum: VEHICLE_CONDITIONS_VALUES},
+    color: {type: String, required: true, enum: VEHICLE_COLORS_VALUES},
+    driveType: {type: String, required: true, enum: VEHICLE_DRIVE_VALUES},
     mileage: {type: Number, required: true},
     price: {type: Number, required: true},
     currency: {
