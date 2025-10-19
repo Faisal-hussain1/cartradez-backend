@@ -6,6 +6,10 @@ const {
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_MAKES_VALUES,
   VEHICLE_MODELS_VALUES,
+  VEHICLE_VARIANTS_VALUES,
+  VEHICLE_CONDITIONS_VALUES,
+  VEHICLE_COLORS_VALUES,
+  VEHICLE_DRIVE_VALUES,
 } = require('../constants/vehicleConstants');
 const {validatorUtils} = require('../utils');
 
@@ -17,8 +21,17 @@ module.exports.validateCreateVehicleRequest = ({data}) => {
     model: Yup.string()
       .required('Vehicle model is required')
       .oneOf(VEHICLE_MODELS_VALUES),
+    variant: Yup.string().oneOf(VEHICLE_VARIANTS_VALUES),
     year: Yup.number().required('Vehicle year is required'),
-    color: Yup.string().required('Vehicle color is required'),
+    condition: Yup.string()
+      .required('Vehicle condition is required')
+      .oneOf(VEHICLE_CONDITIONS_VALUES),
+    driveType: Yup.string()
+      .required('Vehicle drive type is required')
+      .oneOf(VEHICLE_DRIVE_VALUES),
+    color: Yup.string()
+      .required('Vehicle color is required')
+      .oneOf(VEHICLE_COLORS_VALUES),
     mileage: Yup.number().required('Vehicle Mileage is required'),
     price: Yup.number().required('Price is required'),
     currency: Yup.string().oneOf(VEHICLE_CURRENCY_TYPES_VALUES),

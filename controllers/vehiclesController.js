@@ -155,6 +155,15 @@ module.exports = class VehiclesController {
       await GeneralServices.findOne({
         model: VehiclesModel,
         query: {_id: vehicleId},
+        options: {
+          options: {fieldsInclusion: {include: ['createdAt']}},
+          populateFields: [
+            {
+              path: 'creatorId',
+              select: '_id firstName lastName phoneNumber',
+            },
+          ],
+        },
       });
 
     if (gettingVehicleErr) throw gettingVehicleErr;
