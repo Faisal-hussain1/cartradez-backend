@@ -68,6 +68,11 @@ const vehiclesSchema = new Schema(
       default: VEHICLE_CATEGORIES.car.value,
     },
     creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organizations',
+      required: true,
+    },
     isFeatured: {type: Boolean, default: false},
     isGreatPrice: {type: Boolean, default: false},
     status: {

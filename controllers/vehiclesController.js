@@ -10,7 +10,11 @@ const {FileServices, GeneralServices} = require('../services');
 const {prepareVehiclesData} = require('../utils/vehiclesUtils');
 const VehiclesModel = require('../models/VehiclesModel');
 const {getCurrentTimestamp} = require('../utils/dateUtils');
-const {VEHICLE_ACTIONS} = require('../constants/vehicleConstants');
+
+const {
+  VEHICLE_ACTIONS,
+  VEHICLE_STATUSES,
+} = require('../constants/vehicleConstants');
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
@@ -28,6 +32,7 @@ module.exports = class VehiclesController {
 
     try {
       data.creatorId = loggedInUser._id;
+      data.organizationId = loggedInUser.currentActiveOrganization._id;
       data.events = [
         {
           action: VEHICLE_ACTIONS.created.value,
@@ -156,11 +161,12 @@ module.exports = class VehiclesController {
         model: VehiclesModel,
         query: {_id: vehicleId},
         options: {
-          options: {fieldsInclusion: {include: ['createdAt']}},
+          fieldsInclusion: {include: ['createdAt']},
           populateFields: [
             {
               path: 'creatorId',
-              select: '_id firstName lastName phoneNumber',
+              select:
+                '_id firstName lastName phoneNumber organizations createdAt',
             },
           ],
         },
@@ -170,6 +176,25 @@ module.exports = class VehiclesController {
 
     if (!retrievedVehicle)
       return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
+    const {count, error: countVehiclesErr} =
+      await GeneralServices.countDocuments({
+        model: VehiclesModel,
+        query: {
+          $and: [
+            {creatorId: retrievedVehicle.creatorId._id},
+            {status: VEHICLE_STATUSES.active.value},
+          ],
+        },
+      });
+
+    if (countVehiclesErr) throw countVehiclesErr;
+
+    retrievedVehicle.creatorId = {
+      ...(retrievedVehicle.creatorId.toObject?.() ||
+        retrievedVehicle.creatorId),
+      totalActiveVehicles: count,
+    };
 
     return next(
       VehiclesResponsesFactory.vehicleRetrievedSuccessfully({
