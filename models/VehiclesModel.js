@@ -10,7 +10,6 @@ const {
   VEHICLE_STATUSES,
   VEHICLE_CATEGORIES,
   VEHICLE_MAKES_VALUES,
-  VEHICLE_MODELS_VALUES,
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_CATEGORIES_VALUES,
   VEHICLE_ACTIONS_VALUES,
@@ -25,7 +24,7 @@ const Schema = mongoose.Schema;
 const vehiclesSchema = new Schema(
   {
     make: {type: String, required: true, enum: VEHICLE_MAKES_VALUES},
-    model: {type: String, required: true, enum: VEHICLE_MODELS_VALUES},
+    model: {type: String, required: true},
     variant: {type: String, enum: VEHICLE_VARIANTS_VALUES},
     year: {type: Number, required: true},
     condition: {type: String, required: true, enum: VEHICLE_CONDITIONS_VALUES},

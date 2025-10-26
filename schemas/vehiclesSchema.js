@@ -5,7 +5,6 @@ const {
   VEHICLE_FUEL_TYPES_VALUES,
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_MAKES_VALUES,
-  VEHICLE_MODELS_VALUES,
   VEHICLE_VARIANTS_VALUES,
   VEHICLE_CONDITIONS_VALUES,
   VEHICLE_COLORS_VALUES,
@@ -18,9 +17,7 @@ module.exports.validateCreateVehicleRequest = ({data}) => {
     make: Yup.string()
       .required('Vehicle make is required')
       .oneOf(VEHICLE_MAKES_VALUES),
-    model: Yup.string()
-      .required('Vehicle model is required')
-      .oneOf(VEHICLE_MODELS_VALUES),
+    model: Yup.string().required('Vehicle model is required'),
     variant: Yup.string().oneOf(VEHICLE_VARIANTS_VALUES),
     year: Yup.number().required('Vehicle year is required'),
     condition: Yup.string()
