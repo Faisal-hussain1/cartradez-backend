@@ -109,18 +109,46 @@ module.exports = class VehiclesController {
 
     if (countErr) throw countErr;
 
-    const query = {
-      ...(req.query.search && {
+    // const query = {
+    //   ...(req.query.search && {
+    //     $or: [
+    //       {
+    //         make: {
+    //           $regex: req.query.search.trim(),
+    //           $options: 'i',
+    //         },
+    //       },
+    //       {
+    //         model: {
+    //           $regex: req.query.search.trim(),
+    //           $options: 'i',
+    //         },
+    //       },
+    //       {
+    //         variant: {
+    //           $regex: req.query.search.trim(),
+    //           $options: 'i',
+    //         },
+    //       },
+    //     ],
+    //   }),
+    // };
+
+    const search = req.query.search?.trim();
+
+    const query = {};
+
+    if (search) {
+      const keywords = search.split(/\s+/); // split by space(s)
+
+      query.$and = keywords.map((word) => ({
         $or: [
-          {
-            model: {
-              $regex: req.query.search.trim(),
-              $options: 'i',
-            },
-          },
+          {make: {$regex: word, $options: 'i'}},
+          {model: {$regex: word, $options: 'i'}},
+          {variant: {$regex: word, $options: 'i'}},
         ],
-      }),
-    };
+      }));
+    }
 
     const {docs: retrievedVehicles, error: vehiclesRetrievedError} =
       await GeneralServices.find({
