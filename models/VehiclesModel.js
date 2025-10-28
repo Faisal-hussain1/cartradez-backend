@@ -59,6 +59,10 @@ const vehiclesSchema = new Schema(
         url: {type: String, required: true},
       },
     ],
+    coverImage: {
+      key: {type: String},
+      url: {type: String},
+    },
 
     category: {
       type: String,
@@ -74,6 +78,7 @@ const vehiclesSchema = new Schema(
     },
     isFeatured: {type: Boolean, default: false},
     isGreatPrice: {type: Boolean, default: false},
+    isManagedByCartradez: {type: Boolean, default: false},
     status: {
       type: String,
       enum: VEHICLE_STATUSES_VALUES,
