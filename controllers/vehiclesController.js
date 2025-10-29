@@ -103,6 +103,8 @@ module.exports = class VehiclesController {
   }
 
   static async getAllVehicles(req, res, next) {
+    const listingTypeLimit = 10; //This is for now
+
     const limit =
       parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
 
@@ -111,21 +113,13 @@ module.exports = class VehiclesController {
 
     const skip = (page - 1) * limit;
 
-    const {count, error: countErr} = await GeneralServices.countDocuments({
-      model: VehiclesModel,
-      query: {},
-    });
-
-    if (countErr) throw countErr;
-
     const search = req.query.search?.trim();
 
-    const query = {};
+    const queryBase = {};
 
     if (search) {
       const keywords = search.split(/\s+/);
-
-      query.$and = keywords.map((word) => ({
+      queryBase.$and = keywords.map((word) => ({
         $or: [
           {make: {$regex: word, $options: 'i'}},
           {model: {$regex: word, $options: 'i'}},
@@ -134,34 +128,52 @@ module.exports = class VehiclesController {
       }));
     }
 
-    const {docs: retrievedVehicles, error: vehiclesRetrievedError} =
-      await GeneralServices.find({
+    const types = ['standard', 'premium', 'quickSell'];
+    const perTypeLimit = listingTypeLimit;
+    let allVehicles = [];
+
+    for (const type of types) {
+      const {docs} = await GeneralServices.find({
         model: VehiclesModel,
-        query,
+        query: {
+          ...queryBase,
+          listingType: type,
+        },
         options: {
           ...req.getUsersInclusionOptions,
           queryProperties: {
-            skip,
-            limit,
+            limit: perTypeLimit,
             sort: {createdAt: -1},
           },
           fieldsInclusion: {
             includeSpecificFields: [
-              '_id make model year price currency coverImage',
+              '_id make model year price currency coverImage listingType',
             ],
           },
         },
       });
 
-    if (vehiclesRetrievedError) throw vehiclesRetrievedError;
+      if (docs?.length) allVehicles.push(...docs);
+    }
+
+    const totalResults = allVehicles.length;
+
+    const typePriority = {standard: 1, premium: 2, quickSell: 3};
+    allVehicles.sort((a, b) => {
+      return typePriority[a.listingType] - typePriority[b.listingType];
+    });
+
+    const paginatedVehicles = allVehicles.slice(skip, skip + limit);
+
+    const totalPages = Math.ceil(totalResults / limit);
 
     return next(
       VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
-        vehicles: retrievedVehicles,
-        count,
+        vehicles: paginatedVehicles,
+        count: totalResults,
         page,
         limit,
-        totalPages: Math.ceil(count / limit),
+        totalPages,
       })
     );
   }

@@ -17,6 +17,8 @@ const {
   VEHICLE_CONDITIONS_VALUES,
   VEHICLE_COLORS_VALUES,
   VEHICLE_DRIVE_VALUES,
+  VEHICLE_LISTINGS_VALUES,
+  VEHICLE_LISTINGS,
 } = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
@@ -76,8 +78,11 @@ const vehiclesSchema = new Schema(
       ref: 'Organizations',
       required: true,
     },
-    isFeatured: {type: Boolean, default: false},
-    isGreatPrice: {type: Boolean, default: false},
+    listingType: {
+      type: String,
+      enum: VEHICLE_LISTINGS_VALUES,
+      default: VEHICLE_LISTINGS.standard.value,
+    },
     isManagedByCartradez: {type: Boolean, default: false},
     status: {
       type: String,

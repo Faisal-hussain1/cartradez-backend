@@ -376,6 +376,25 @@ const VEHICLE_CYLINDERS_VALUES = Object.values(VEHICLE_CYLINDERS).map(
   (cylinder) => cylinder.value
 );
 
+const VEHICLE_LISTINGS = {
+  premium: {
+    value: 'premium',
+    label: 'Premium',
+  },
+  quickSell: {
+    value: 'quickSell',
+    label: 'Quick Sell',
+  },
+  standard: {
+    value: 'standard',
+    label: 'Standard',
+  },
+};
+
+const VEHICLE_LISTINGS_VALUES = Object.values(VEHICLE_LISTINGS).map(
+  (listing) => listing.value
+);
+
 module.exports = {
   VEHICLE_MAKES,
   VEHICLE_MAKES_VALUES,
@@ -409,4 +428,6 @@ module.exports = {
   VEHICLE_DOORS_VALUES,
   VEHICLE_CYLINDERS,
   VEHICLE_CYLINDERS_VALUES,
+  VEHICLE_LISTINGS,
+  VEHICLE_LISTINGS_VALUES,
 };
