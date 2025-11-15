@@ -45,6 +45,7 @@ module.exports = class VehiclesController {
           timestamp: getCurrentTimestamp(),
         },
       ];
+      data.features = data.features || [];
 
       session = await mongoose.startSession();
       session.startTransaction();
@@ -135,10 +136,7 @@ module.exports = class VehiclesController {
     for (const type of types) {
       const {docs} = await GeneralServices.find({
         model: VehiclesModel,
-        query: {
-          ...queryBase,
-          listingType: type,
-        },
+        query: {...queryBase, listingType: type},
         options: {
           ...req.getUsersInclusionOptions,
           queryProperties: {
