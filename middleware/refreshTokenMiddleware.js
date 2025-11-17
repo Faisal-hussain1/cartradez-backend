@@ -47,7 +47,7 @@ module.exports = (data, req, res, next) => {
 
   res.cookie(getTokenHeaderName(), token, cookiesOpts);
 
-  delete data.body.isLoginRequest; // This is only used for creating jwt, no need to send it to the client
+  delete data.body?.isLoginRequest; // This is only used for creating jwt, no need to send it to the client
 
   return next(data);
 };

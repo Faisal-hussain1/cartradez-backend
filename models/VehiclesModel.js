@@ -13,10 +13,11 @@ const {
   VEHICLE_CURRENCY_TYPES_VALUES,
   VEHICLE_CATEGORIES_VALUES,
   VEHICLE_ACTIONS_VALUES,
-  VEHICLE_VARIANTS_VALUES,
   VEHICLE_CONDITIONS_VALUES,
-  VEHICLE_COLORS_VALUES,
   VEHICLE_DRIVE_VALUES,
+  VEHICLE_LISTINGS_VALUES,
+  VEHICLE_LISTINGS,
+  VEHICLE_BODIES_VALUES,
 } = require('../constants/vehicleConstants');
 
 const Schema = mongoose.Schema;
@@ -25,27 +26,14 @@ const vehiclesSchema = new Schema(
   {
     make: {type: String, required: true, enum: VEHICLE_MAKES_VALUES},
     model: {type: String, required: true},
-    variant: {type: String, enum: VEHICLE_VARIANTS_VALUES},
+    variant: {type: String},
     year: {type: Number, required: true},
     condition: {type: String, required: true, enum: VEHICLE_CONDITIONS_VALUES},
-    color: {type: String, required: true, enum: VEHICLE_COLORS_VALUES},
-    driveType: {type: String, required: true, enum: VEHICLE_DRIVE_VALUES},
+    bodyType: {type: String, required: true, enum: VEHICLE_BODIES_VALUES},
+    color: {type: String, required: true},
     mileage: {type: Number, required: true},
-    price: {type: Number, required: true},
-    currency: {
-      type: String,
-      required: true,
-      enum: VEHICLE_CURRENCY_TYPES_VALUES,
-      default: VEHICLE_CURRENCY_TYPES.usd.value,
-    },
-    description: {type: String, required: true},
     engineSize: {
       type: Number,
-      required: true,
-    },
-    fuelType: {
-      type: String,
-      enum: VEHICLE_FUEL_TYPES_VALUES,
       required: true,
     },
     transmission: {
@@ -53,12 +41,35 @@ const vehiclesSchema = new Schema(
       enum: VEHICLE_TRANSMISSION_TYPES_VALUES,
       required: true,
     },
+    fuelType: {
+      type: String,
+      enum: VEHICLE_FUEL_TYPES_VALUES,
+      required: true,
+    },
+    driveType: {type: String, required: true, enum: VEHICLE_DRIVE_VALUES},
+    currency: {
+      type: String,
+      required: true,
+      enum: VEHICLE_CURRENCY_TYPES_VALUES,
+      default: VEHICLE_CURRENCY_TYPES.usd.value,
+    },
+    price: {type: Number, required: true},
+    registrationCity: {type: String, required: true},
+    registrationYear: {type: Number, required: true},
+    registrationNumber: {type: String, required: true},
+    numberOfOwners: {type: Number, required: true},
+    features: [{type: String}],
+    description: {type: String, required: true},
     images: [
       {
         key: {type: String, required: true},
         url: {type: String, required: true},
       },
     ],
+    coverImage: {
+      key: {type: String},
+      url: {type: String},
+    },
 
     category: {
       type: String,
@@ -72,8 +83,12 @@ const vehiclesSchema = new Schema(
       ref: 'Organizations',
       required: true,
     },
-    isFeatured: {type: Boolean, default: false},
-    isGreatPrice: {type: Boolean, default: false},
+    listingType: {
+      type: String,
+      enum: VEHICLE_LISTINGS_VALUES,
+      default: VEHICLE_LISTINGS.standard.value,
+    },
+    isManagedByCartradez: {type: Boolean, default: false},
     status: {
       type: String,
       enum: VEHICLE_STATUSES_VALUES,

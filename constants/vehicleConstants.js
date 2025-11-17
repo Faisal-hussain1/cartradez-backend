@@ -172,13 +172,17 @@ const VEHICLE_VARIANTS_VALUES = Object.values(VEHICLE_VARIANTS).map(
 );
 
 const VEHICLE_CONDITIONS = {
-  new: {
-    value: 'new',
-    label: 'New',
+  imported: {
+    value: 'imported',
+    label: 'Imported (Unregistered)',
   },
   used: {
     value: 'used',
     label: 'Used',
+  },
+  new: {
+    value: 'new',
+    label: 'New',
   },
 };
 
@@ -250,10 +254,11 @@ const VEHICLE_CATEGORIES_VALUES = Object.values(VEHICLE_CATEGORIES).map(
 );
 
 const VEHICLE_FUEL_TYPES = {
-  petrol: {value: 'petrol'},
-  diesel: {value: 'diesel'},
-  electric: {value: 'electric'},
-  hybrid: {value: 'hybrid'},
+  petrol: {value: 'petrol', label: 'Petrol'},
+  diesel: {value: 'diesel', label: 'Diesel'},
+  cngGas: {value: 'cngGas', label: 'CNG Gas'},
+  electric: {value: 'electric', label: 'Electric'},
+  hybrid: {value: 'hybrid', label: 'Hybrid'},
 };
 
 const VEHICLE_FUEL_TYPES_VALUES = Object.values(VEHICLE_FUEL_TYPES).map(
@@ -303,31 +308,60 @@ const VEHICLE_ACTIONS_VALUES = Object.values(VEHICLE_ACTIONS).map(
   (action) => action.value
 );
 
+// const VEHICLE_BODIES = {
+//   convertible: {
+//     value: 'convertible',
+//     label: 'Convertible',
+//   },
+//   coupe: {
+//     value: 'coupe',
+//     label: 'Coupe',
+//   },
+//   hatchback: {
+//     value: 'hatchback',
+//     label: 'Hatchback',
+//   },
+//   sedan: {
+//     value: 'sedan',
+//     label: 'Sedan',
+//   },
+//   rvOrSuv: {
+//     value: 'rvOrSuv',
+//     label: 'RV/SUV',
+//   },
+//   other: {
+//     value: 'other',
+//     label: 'Other',
+//   },
+// };
+
 const VEHICLE_BODIES = {
-  convertible: {
-    value: 'convertible',
-    label: 'Convertible',
-  },
-  coupe: {
-    value: 'coupe',
-    label: 'Coupe',
-  },
-  hatchback: {
-    value: 'hatchback',
-    label: 'Hatchback',
-  },
-  sedan: {
-    value: 'sedan',
-    label: 'Sedan',
-  },
-  rvOrSuv: {
-    value: 'rvOrSuv',
-    label: 'RV/SUV',
-  },
-  other: {
-    value: 'other',
-    label: 'Other',
-  },
+  convertible: {value: 'convertible', label: 'Convertible'},
+  coupe: {value: 'coupe', label: 'Coupe'},
+  hatchback: {value: 'hatchback', label: 'Hatchback'},
+  sedan: {value: 'sedan', label: 'Sedan'},
+  wagon: {value: 'wagon', label: 'Station Wagon'},
+  suv: {value: 'suv', label: 'SUV'},
+  crossover: {value: 'crossover', label: 'Crossover'},
+  compactSuv: {value: 'compactSuv', label: 'Compact SUV'},
+  fullSizeSuv: {value: 'fullSizeSuv', label: 'Full-Size SUV'},
+  minivan: {value: 'minivan', label: 'Minivan / MPV'},
+  van: {value: 'van', label: 'Van / Cargo Van'},
+  pickup: {value: 'pickup', label: 'Pickup Truck'},
+  chassisCab: {value: 'chassisCab', label: 'Chassis Cab'},
+  sportsCar: {value: 'sportsCar', label: 'Sports Car'},
+  supercar: {value: 'supercar', label: 'Supercar / Hypercar'},
+  grandTourer: {value: 'grandTourer', label: 'Grand Tourer (GT)'},
+  muscleCar: {value: 'muscleCar', label: 'Muscle Car'},
+  offRoad: {value: 'offRoad', label: 'Off-Road Vehicle'},
+  coupeSuv: {value: 'coupeSuv', label: 'Crossover Coupe / Coupe SUV'},
+  ute: {value: 'ute', label: 'Ute / Utility Vehicle'},
+  microcar: {value: 'microcar', label: 'Microcar / City Car'},
+  limousine: {value: 'limousine', label: 'Limousine'},
+  hearse: {value: 'hearse', label: 'Hearse'},
+  camperVan: {value: 'camperVan', label: 'Camper Van / RV'},
+  panelVan: {value: 'panelVan', label: 'Panel Van'},
+  other: {value: 'other', label: 'Other'},
 };
 
 const VEHICLE_BODIES_VALUES = Object.values(VEHICLE_BODIES).map(
@@ -376,6 +410,25 @@ const VEHICLE_CYLINDERS_VALUES = Object.values(VEHICLE_CYLINDERS).map(
   (cylinder) => cylinder.value
 );
 
+const VEHICLE_LISTINGS = {
+  premium: {
+    value: 'premium',
+    label: 'Premium',
+  },
+  quickSell: {
+    value: 'quickSell',
+    label: 'Quick Sell',
+  },
+  standard: {
+    value: 'standard',
+    label: 'Standard',
+  },
+};
+
+const VEHICLE_LISTINGS_VALUES = Object.values(VEHICLE_LISTINGS).map(
+  (listing) => listing.value
+);
+
 module.exports = {
   VEHICLE_MAKES,
   VEHICLE_MAKES_VALUES,
@@ -409,4 +462,6 @@ module.exports = {
   VEHICLE_DOORS_VALUES,
   VEHICLE_CYLINDERS,
   VEHICLE_CYLINDERS_VALUES,
+  VEHICLE_LISTINGS,
+  VEHICLE_LISTINGS_VALUES,
 };
