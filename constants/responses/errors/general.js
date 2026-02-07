@@ -26,4 +26,5 @@ module.exports.GENERAL_ERROR_TYPES = {
   fileNotFound: {
     value: 'FILE_NOT_FOUND',
   },
+  
 };

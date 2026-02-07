@@ -11,5 +11,16 @@
   "awakeJobFrequencyInMinutes": "10",
   "windowSizeInMinutes": 1,
   "maxRequestsAllowed": 30,
-  "socket": "socketIo"
+  "socket": "socketIo",
+  "frontendURL": "",
+  "allowedOrigins": "",
+
+  "jwtPrivateKey": "",
+  "mongoUri": "",
+  "sentryDsn": "",
+
+  "awsAccessKey": "",
+  "awsSecretAccessKey": "",
+  "awsBucket": "",
+  "awsBucketRegion": ""
 }

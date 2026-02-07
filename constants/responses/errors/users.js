@@ -20,4 +20,15 @@ module.exports.USER_ERRORS_TYPES = {
   userAlreadyVerified: {
     value: 'USER_ALREADY_VERIFIED',
   },
+  dealerPendingApproval: {
+    value: 'DEALER_PENDING_APPROVAL',
+  },
+  dealerRejected: {
+    value: 'DEALER_REJECTED',
+  },  
+    
+  userBlocked: {
+    value: 'USER_BLOCKED',
+  },
+  
 };

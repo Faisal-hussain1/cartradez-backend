@@ -20,6 +20,20 @@ module.exports = class UsersResponsesFactory {
       body: {type: USER_SUCCESS_TYPES.userInvitedSuccessfully.value},
     });
   }
+  static dealerRegisteredSuccessfully() {
+    return new AppResponse({
+      message: 'Dealer registered successfully',      
+      statusCode: 201,
+      body: {type: USER_SUCCESS_TYPES.dealerRegisteredSuccessfully.value},
+    });
+  }   
+    static dealerApprovedSuccessfully() {
+    return new AppResponse({
+      message: 'Dealer approved successfully',
+      statusCode: 200, 
+      body: { type: USER_SUCCESS_TYPES.dealerApprovedSuccessfully.value },
+    });
+  }
   static userLoggedInSuccessfully({user, isLoginRequest}) {
     return new AppResponse({
       message: 'User logged in successfully',
@@ -65,6 +79,7 @@ module.exports = class UsersResponsesFactory {
       body: {type: USER_SUCCESS_TYPES.logoutSuccessfully.value},
     });
   }
+
 
   static userVerifiedSuccessfully() {
     return new AppResponse({

@@ -6,11 +6,16 @@
   "jwtPrivateKey": "JWT_SECRET",
   "mongoUri": "MONGO_DB_CONNECT_STRING",
   "sentryDsn": "SENTRY_DSN",
+  "sendGridApiKey": "SENDGRID_API_KEY",
+  "defaultEmailName": "DEFAULT_EMAIL_NAME",
+  "defaultEmailAddress": "DEFAULT_EMAIL_ADDRESS",
+  "sendgrid": {
+    "apiKey": "SENDGRID_API_KEY",
+    "fromEmail": "DEFAULT_EMAIL_ADDRESS",
+    "fromName": "DEFAULT_EMAIL_NAME"
+  },
   "awsAccessKey": "AWS_ACCESS_KEY",
   "awsSecretAccessKey": "AWS_SECRET_ACCESS_KEY",
   "awsBucket": "AWS_BUCKET",
-  "awsBucketRegion": "AWS_BUCKET_REGION",
-  "sendGridApiKey": "SENDGRID_API_KEY",
-  "defaultEmailName": "DEFAULT_EMAIL_NAME",
-  "defaultEmailAddress": "DEFAULT_EMAIL_ADDRESS"
+  "awsBucketRegion": "AWS_BUCKET_REGION"
 }
