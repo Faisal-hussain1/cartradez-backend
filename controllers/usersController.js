@@ -486,6 +486,16 @@ module.exports = class UsersController {
 
       createdUser.generateVerificationToken();
 
+      // await actions.users.verifyUser({
+      //   user: createdUser,
+      //   locale: getLocaleFromCookie({req}) || 'en',
+      // });
+      // ✅ CHANGE: Send verification email
+      await actions.users.verifyUser({
+        user: createdUser,
+        locale: getLocaleFromCookie({req}),
+      });
+
       // create default organization
       const {organization, error: organizationError} =
         await UsersServices.createUserOrganization({
@@ -544,6 +554,54 @@ module.exports = class UsersController {
     }
   }
 
+  static async verifyUser(req, res, next) {
+    try {
+      const token = req.body.token || req.params.token;
+
+      const decodedToken = jwtUtils.verifyToken({token});
+
+      if (!decodedToken) {
+        return res.status(400).json({
+          success: false,
+          error: 'invalid_token',
+        });
+      }
+
+      const {user} = await UsersServices.getUserById({
+        _id: decodedToken._id,
+      });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'user_not_found',
+        });
+      }
+
+      if (user.isVerified) {
+        return res.status(200).json({
+          success: true,
+          already: true,
+        });
+      }
+
+      user.isVerified = true;
+      user.verificationToken = undefined;
+
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        verified: true,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+      });
+    }
+  }
+
   // =========================
   // LOGIN
   // =========================
@@ -563,16 +621,14 @@ module.exports = class UsersController {
     if (!userToLogin || !userToLogin.password)
       throw UsersErrorsFactory.wrongEmailOrPasswordErr();
 
-    // 🔒 block check
     if (userToLogin.isBlocked) throw UsersErrorsFactory.userBlockedErr();
 
-    // 🔒 dealer approval check
-if (
-  userToLogin.systemRole === 'dealer' &&
-  userToLogin.dealerStatus !== usersConstants.DEALER_STATUS.approved.value
-) {
-  throw UsersErrorsFactory.dealerPendingApprovalErr();
-}
+    if (
+      userToLogin.systemRole === 'dealer' &&
+      userToLogin.dealerStatus !== usersConstants.DEALER_STATUS.approved.value
+    ) {
+      throw UsersErrorsFactory.dealerPendingApprovalErr();
+    }
 
     const {isPasswordVerified} = await UsersServices.verifyUserPassword({
       inputPassword: inputData.password,
@@ -585,12 +641,27 @@ if (
 
     userToLogin.password = undefined;
 
-    next(
-      UsersResponsesFactory.userLoggedInSuccessfully({
-        user: userToLogin,
-        isLoginRequest: true,
-      })
-    );
+    // next(
+    //   UsersResponsesFactory.userLoggedInSuccessfully({
+    //     user: userToLogin,
+    //     isLoginRequest: true,
+    //   })
+    // );
+return res.status(200).json({
+  data: {
+    user: userToLogin,
+    token: jwtUtils.generateToken({
+      payload: {
+        _id: userToLogin._id,
+        email: userToLogin.email,
+        systemRole: userToLogin.systemRole,
+      },
+    }),
+  },
+  
+  message: 'Logged in successfully',
+  success: true,
+});
   }
 
   // =========================
@@ -688,7 +759,7 @@ if (
   // FORGET PASSWORD
   // =========================
   static async forgetPassword(req, res, next) {
-      console.log('👉 FORGET PASSWORD REQUEST FOR:', req.body.email);
+    console.log(' FORGET PASSWORD REQUEST FOR:', req.body.email);
 
     const {user} = await UsersServices.getUserByEmail({
       email: req.body.email,

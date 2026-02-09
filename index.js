@@ -1,10 +1,10 @@
 require('dotenv').config();
 
 const config = require('config');
-console.log('SENDGRID ENV:', process.env.SENDGRID_API_KEY);
-console.log('SENDGRID CONFIG:', config.get('sendgrid.apiKey'));
-console.log('DEFAULT EMAIL ADDRESS:', config.get('sendgrid.fromEmail'));
-console.log('DEFAULT EMAIL NAME:', config.get('sendgrid.fromName'));
+// console.log('SENDGRID ENV:', process.env.SENDGRID_API_KEY);
+// console.log('SENDGRID CONFIG:', config.get('sendgrid.apiKey'));
+// console.log('DEFAULT EMAIL ADDRESS:', config.get('sendgrid.fromEmail'));
+// console.log('DEFAULT EMAIL NAME:', config.get('sendgrid.fromName'));
 const app = require('./app');
 const socket = require('./socket');
 

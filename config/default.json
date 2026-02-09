@@ -6,13 +6,15 @@
     "prod": "production",
     "test": "test"
   },
+  "locale": "en",
+
   "projectName": "cartradez",
   "tokenVariable": "x-auth-token",
   "awakeJobFrequencyInMinutes": "10",
   "windowSizeInMinutes": 1,
   "maxRequestsAllowed": 30,
   "socket": "socketIo",
-  "frontendURL": "",
+"frontendURL": "http://localhost:3000",
   "allowedOrigins": "",
 
   "jwtPrivateKey": "",
