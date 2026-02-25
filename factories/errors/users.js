@@ -62,4 +62,51 @@ module.exports = class UsersErrorsFactory {
       error: {type: USER_ERRORS_TYPES.userAlreadyVerified.value},
     });
   }
+
+  // 🔴 ===== NEW ERRORS FOR CARTRADEZ FLOW =====
+
+  static dealerPendingApprovalErr() {
+    return new AppError({
+      message: 'Dealer account is pending admin approval is required' ,
+      statusCode: 403,
+      error: {
+        type: USER_ERRORS_TYPES.dealerPendingApproval
+          ? USER_ERRORS_TYPES.dealerPendingApproval.value
+          : 'dealerPendingApproval',
+      },
+    });
+  }
+static dealerRejectedErr() {
+    return new AppError({
+      message: 'Dealer account has been rejected by admin',     
+      statusCode: 403,
+      error: {
+        type: USER_ERRORS_TYPES.dealerRejected
+          ? USER_ERRORS_TYPES.dealerRejected.value
+          : 'dealerRejected',
+      },
+    });
+  } 
+  static dealerApprovedErr() {
+    return new AppError({
+      message: 'Dealer account has been approved by admin',         
+      statusCode: 200,
+      error: {
+        type: USER_ERRORS_TYPES.dealerApproved        
+          ? USER_ERRORS_TYPES.dealerApproved.value
+          : 'dealerApproved',
+      },
+    });
+  }   
+  static userBlockedErr() {
+    return new AppError({
+      message: 'Your account has been blocked by admin',
+      statusCode: 403,
+      error: {
+        type: USER_ERRORS_TYPES.userBlocked
+          ? USER_ERRORS_TYPES.userBlocked.value
+          : 'userBlocked',
+      },
+    });
+  }
 };

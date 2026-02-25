@@ -5,5 +5,11 @@
   "port": "3001",
   "jwtPrivateKey": "JWT_SECRET",
   "mongoUri": "mongodb://127.0.0.1:27017/boilerplate",
-  "sentryDsn": "SENTRY_DSN"
+  "sentryDsn": "SENTRY_DSN",
+    "sendgrid": {
+    "apiKey": "SENDGRID_API_KEY",
+    "fromEmail": "DEFAULT_EMAIL_ADDRESS",
+    "fromName": "DEFAULT_EMAIL_NAME"
+  }
+
 }
