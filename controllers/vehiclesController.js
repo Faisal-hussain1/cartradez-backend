@@ -15,15 +15,22 @@ const {
   VEHICLE_STATUSES,
 } = require('../constants/vehicleConstants');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
+const { dataUpdatedSuccessfully } = require('../factories/responses/general');
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
     const data = req.body;
+    const loggedInUser = req.jwtToken;
+    if (!loggedInUser) {
+  return next(VehiclesErrorsFactory.unauthorizedErr?.() || {
+    statusCode: 401,
+    message: "Unauthorized",
+  });
+}
 
-    const loggedInUser = req.jwtToken.user;
 
     const isAdminRole =
-      loggedInUser.currentActiveOrganization.role === SYSTEM_ROLES.admin.value;
+      loggedInUser.role === SYSTEM_ROLES.admin.value;
 
     if (isAdminRole) data.isManagedByCartradez = true;
 
@@ -36,12 +43,11 @@ module.exports = class VehiclesController {
       return next(VehiclesErrorsFactory.vehicleLessImagesErr());
 
     try {
-      data.creatorId = loggedInUser._id;
-      data.organizationId = loggedInUser.currentActiveOrganization._id;
+      data.creatorId = loggedInUser?._id;
       data.events = [
         {
           action: VEHICLE_ACTIONS.created.value,
-          userId: loggedInUser._id,
+          userId: loggedInUser?._id,
           timestamp: getCurrentTimestamp(),
         },
       ];
@@ -57,23 +63,25 @@ module.exports = class VehiclesController {
           session,
         });
 
+         
       if (vehicleCreationError) throw vehicleCreationError;
+      if (!createdVehicle) throw new Error("Vehicle creation failed");
 
-      createdVehicleId = createdVehicle._id;
+      createdVehicleId = createdVehicle?._id.toString();
+
 
       if (req?.files && req.files.length > 0) {
         let image;
         for (const file of req.files) {
           image = await FileServices.uploadSingleFile({
             file: file,
-            fileDir: `vehicle-image_${createdVehicle._id}`,
+            fileDir: `vehicle-image_${createdVehicleId}`,
           });
 
           awsFileKeys.push(image.key);
           vehicleImages.push(image);
         }
       }
-
       createdVehicle.images = vehicleImages;
       createdVehicle.coverImage = {
         key: vehicleImages[0].key,
@@ -83,8 +91,8 @@ module.exports = class VehiclesController {
 
       await session.commitTransaction();
       session.endSession();
-
-      return next(VehiclesResponsesFactory.vehicleAddedSuccessfully());
+      
+      if(createdVehicle._id)  return res.json({statusCode:201,message:"Vehicle added successfully",success:true})
     } catch (error) {
       if (awsFileKeys.length > 0) {
         for (const awsFileKey of awsFileKeys) {
@@ -104,77 +112,129 @@ module.exports = class VehiclesController {
   }
 
   static async getAllVehicles(req, res, next) {
-    const listingTypeLimit = 10; //This is for now
+  const limit =
+    parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
 
-    const limit =
-      parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
+  const page =
+    parseInt(req.query.page) || generalConstant.paginationDefaults.page;
 
-    const page =
-      parseInt(req.query.page) || generalConstant.paginationDefaults.page;
+  const skip = (page - 1) * limit;
 
-    const skip = (page - 1) * limit;
+  const search = req.query.search?.trim();
 
-    const search = req.query.search?.trim();
+  const query = {};
 
-    const queryBase = {};
+  // Search filter
+  if (search) {
+    const keywords = search.split(/\s+/);
 
-    if (search) {
-      const keywords = search.split(/\s+/);
-      queryBase.$and = keywords.map((word) => ({
-        $or: [
-          {make: {$regex: word, $options: 'i'}},
-          {model: {$regex: word, $options: 'i'}},
-          {variant: {$regex: word, $options: 'i'}},
-        ],
-      }));
-    }
+    query.$and = keywords.map((word) => ({
+      $or: [
+        { make: { $regex: word, $options: "i" } },
+        { model: { $regex: word, $options: "i" } },
+        { variant: { $regex: word, $options: "i" } },
+      ],
+    }));
+  }
 
-    const types = ['standard', 'premium', 'quickSell'];
-    const perTypeLimit = listingTypeLimit;
-    let allVehicles = [];
-
-    for (const type of types) {
-      const {docs} = await GeneralServices.find({
+  try {
+    // Get total count
+    const { count, error: countError } =
+      await GeneralServices.countDocuments({
         model: VehiclesModel,
-        query: {...queryBase, listingType: type},
-        options: {
-          ...req.getUsersInclusionOptions,
-          queryProperties: {
-            limit: perTypeLimit,
-            sort: {createdAt: -1},
-          },
-          fieldsInclusion: {
-            includeSpecificFields: [
-              '_id make model year price currency coverImage listingType',
-            ],
-          },
-        },
+        query,
       });
 
-      if (docs?.length) allVehicles.push(...docs);
-    }
+    if (countError) throw countError;
 
-    const totalResults = allVehicles.length;
-
-    const typePriority = {standard: 1, premium: 2, quickSell: 3};
-    allVehicles.sort((a, b) => {
-      return typePriority[a.listingType] - typePriority[b.listingType];
+    // Get paginated vehicles
+    const { docs, error } = await GeneralServices.find({
+      model: VehiclesModel,
+      query,
+      options: {
+        queryProperties: {
+          skip,
+          limit,
+          sort: { createdAt: -1 },
+        },
+        fieldsInclusion: {
+          includeSpecificFields: [
+            "_id make model year price currency coverImage listingType",
+          ],
+        },
+      },
     });
 
-    const paginatedVehicles = allVehicles.slice(skip, skip + limit);
-
-    const totalPages = Math.ceil(totalResults / limit);
+    if (error) throw error;
 
     return next(
       VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
-        vehicles: paginatedVehicles,
-        count: totalResults,
+        vehicles: docs,
+        count,
         page,
         limit,
-        totalPages,
+        totalPages: Math.ceil(count / limit),
       })
     );
+  } catch (err) {
+    return next(err);
   }
+}
+
+static async getAllVehiclesOfLoggedInUser(req, res, next) {
+  const limit =
+    parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
+
+  const page =
+    parseInt(req.query.page) || generalConstant.paginationDefaults.page;
+
+  const skip = (page - 1) * limit;
+
+  const loggedInUserId = req.user?._id;  // assuming auth middleware sets this
+  const userId=req.params.id;
+
+  if (!loggedInUserId==userId) {
+    return next(new Error("Unauthorized"));
+  }
+
+  try {
+    const query={createrId:loggedInUserId}
+    const { count, error: countError } =
+      await GeneralServices.countDocuments({
+        model: VehiclesModel,
+        query,
+      });
+
+    if (countError) throw countError;
+
+    // Get paginated vehicles for logged in user
+    const { docs, error } = await GeneralServices.findAllByUserId({
+      model: VehiclesModel,
+    query,
+      options: {
+        queryProperties: {
+          skip,
+          limit,
+          sort: { createdAt: -1 },
+        },
+      },
+    });
+
+    if (error) throw error;
+
+    return next(
+      VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
+        vehicles: docs,
+        count,
+        page,
+        limit,
+        totalPages: Math.ceil(count / limit),
+      })
+    );
+  } catch (err) {
+    return next(err);
+  }
+}
 
   static async getVehicle(req, res, next) {
     const vehicleId = req.params.id;

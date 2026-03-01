@@ -62,8 +62,8 @@ const vehiclesSchema = new Schema(
     description: {type: String, required: true},
     images: [
       {
-        key: {type: String, required: true},
-        url: {type: String, required: true},
+        key: {type: String,},
+        url: {type: String,},
       },
     ],
     coverImage: {
@@ -78,11 +78,6 @@ const vehiclesSchema = new Schema(
       default: VEHICLE_CATEGORIES.car.value,
     },
     creatorId: {type: Schema.Types.ObjectId, ref: 'Users', required: true},
-    organizationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organizations',
-      required: true,
-    },
     listingType: {
       type: String,
       enum: VEHICLE_LISTINGS_VALUES,

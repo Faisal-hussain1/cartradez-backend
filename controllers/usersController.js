@@ -422,6 +422,7 @@
 
  const config = require('config');
 const mongoose = require('mongoose');
+const cookie=require('cookie');
 
 const {usersConstants, accessConstants} = require('../constants');
 
@@ -647,16 +648,21 @@ module.exports = class UsersController {
     //     isLoginRequest: true,
     //   })
     // );
-return res.status(200).json({
-  data: {
-    user: userToLogin,
-    token: jwtUtils.generateToken({
+    const accessExpiry=process.env.JWT_ACCESS_EXPIRY;
+
+const token=jwtUtils.generateToken({
       payload: {
         _id: userToLogin._id,
         email: userToLogin.email,
         systemRole: userToLogin.systemRole,
       },
-    }),
+      accessExpiry
+    });
+    
+return res.status(200).json({
+  data: {
+    user: userToLogin,
+    token
   },
   
   message: 'Logged in successfully',
@@ -810,7 +816,7 @@ return res.status(200).json({
   // LOGOUT
   // =========================
   static async logout(req, res, next) {
-    const BASE_URL = config.get('frontendURL');
+    const BASE_URL = process.env.FRONTEND_URL;
     const cookieDomain = getCookieDomain({url: BASE_URL});
     const cookieName = getTokenHeaderName();
 

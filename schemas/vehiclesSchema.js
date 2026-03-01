@@ -12,7 +12,17 @@ const {
 const {validatorUtils} = require('../utils');
 
 module.exports.validateCreateVehicleRequest = ({data}) => {
-  data.features = JSON.parse(data.features) || [];
+  if (typeof data.features === "string") {
+  try {
+    data.features = JSON.parse(data.features);
+  } catch (err) {
+    data.features = [];
+  }
+}
+
+if (!Array.isArray(data.features)) {
+  data.features = [];
+}
 
   const schema = Yup.object().shape({
     make: Yup.string()

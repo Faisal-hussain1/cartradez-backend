@@ -150,7 +150,6 @@ module.exports.create = async ({model, data, session = null, options = {}}) => {
       return await model.create(data, {session});
     } else {
       const doc = new model(data);
-
       return await doc.save({session});
     }
   });
@@ -165,7 +164,6 @@ module.exports.create = async ({model, data, session = null, options = {}}) => {
       query: {_id: {$in: docsToFetch.map((doc) => doc._id)}},
     }));
   }
-
   return {
     success,
     doc: success ? (Array.isArray(data) ? docs : docs[0]) : null,
@@ -246,6 +244,8 @@ module.exports.findOne = async ({
         .session(session)
         .setOptions({includeDeleted, skipMiddlewareGlobalPopulation})
   );
+
+  // console.log(doc)
 
   return {success, doc, error};
 };

@@ -48,7 +48,7 @@ module.exports = class GeneralServices {
 
   static async findAllByUserId({model, _id, options}) {
     // Method for finding all documents associated with a login user
-    let query = {user: _id};
+    let query = {createrId: _id};
 
     return await MongosFactory.find({
       model,

@@ -9,11 +9,6 @@ const userAccessLevelSchema = new Schema(
     view: {
       type: [String],
       default: [],
-
-      // [ALL]         => can view all users
-      // [selfId, ids1,ids2] || [selfId] || [ids1,ids2]  => can view only the users with these ids (if user needs to modify him/herself along with others, then their id has to be added in this array in addition to every other user needed, and if he is only allowed to modify himself but no one else, then the array will only have his/her id, and if they are allowed to modify others only but not themselves, then the array will have users ids and not theirs
-      // [NONE]        => cannot view any user
-      // []            => empty means he cannot do anything . it is just like placeholder
     },
     update: {
       type: [String],

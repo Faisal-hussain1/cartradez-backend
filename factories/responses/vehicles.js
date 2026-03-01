@@ -10,7 +10,6 @@ module.exports = class VehiclesResponsesFactory {
     return new AppResponse({
       message: 'Vehicle added successfully',
       statusCode: 201,
-      body: {type: VEHICLES_SUCCESS_TYPES.vehicleAddedSuccessfully.value},
     });
   }
 

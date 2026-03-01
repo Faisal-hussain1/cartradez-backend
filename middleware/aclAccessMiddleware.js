@@ -13,7 +13,6 @@ module.exports =
       });
 
       const userId = req.jwtToken.user._id;
-
       const {role, organizationId} =
         req.jwtToken.user.currentActiveOrganization;
 

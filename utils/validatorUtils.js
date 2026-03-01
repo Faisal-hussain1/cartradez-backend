@@ -27,8 +27,9 @@ module.exports.mongooseIdValidate = ({name}) => {
 module.exports.checkAllowedRoles =
   ({allowedRoles}) =>
   async ({req}) => {
-    if (!req.jwtToken.user) return false;
-    const {role} = req.jwtToken.user.currentActiveOrganization;
+    if (!req.jwtToken) return false;
+    const {systemRole} = req.jwtToken;
+    console.log(systemRole)
 
-    return allowedRoles.includes(role);
+    return allowedRoles.includes(systemRole);
   };

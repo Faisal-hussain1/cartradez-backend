@@ -53,7 +53,6 @@ module.exports = ({
   return (req, res, next) => {
     // Determine the upload function based on the `multiple` option
     const uploadFn = multiple ? upload.array('files') : upload.single('file');
-
     // Invoke the upload function
     uploadFn(req, res, (err) => {
       if (err) {

@@ -5,7 +5,7 @@ const {generalConstant} = require('../constants');
 const {getTokenHeaderName} = require('./getTokenHeaderUtils');
 
 module.exports.generateToken = ({payload, expiry}) => {
-  const secret = config.get('jwtPrivateKey');
+  const secret = process.env.JWT_SECRET;
   const options = {expiresIn: expiry || generalConstant.tokenExpirationTime};
 
   const token = jwt.sign(payload, secret, options);
@@ -15,8 +15,8 @@ module.exports.generateToken = ({payload, expiry}) => {
 
 module.exports.verifyToken = ({token}) => {
   try {
-    const decodedObj = jwt.verify(token, config.get('jwtPrivateKey'));
-
+    const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
+    console.log(decodedObj)
     return decodedObj;
   } catch (error) {
     return false;

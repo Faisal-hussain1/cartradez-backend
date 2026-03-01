@@ -23,13 +23,14 @@ module.exports = (data, req, res, next) => {
     'Content-Type': 'application/json',
   };
 
+
   return res
     .status(statusCode)
     .set(header)
     .json({
       statusCode,
       message: data.message || 'Internal server error',
-      ...(data.data && {data: data.data}),
+      ...(data.body && {data: data.body}),
       ...(data.code && {code: data.code}),
     });
 };
