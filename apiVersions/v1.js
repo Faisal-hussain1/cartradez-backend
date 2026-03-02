@@ -6,6 +6,7 @@ const {
   privateRoute,
   entitiesRoute,
   vehiclesRoute,
+  paymentRoute
 } = require(`../routes`);
 
 const apiPrefix = '/api/v1/';
@@ -16,6 +17,7 @@ const prepareV1Routes = ({app}) => {
   app.use(`${apiPrefix}private`, authMiddleware, privateRoute);
   app.use(`${apiPrefix}entities`, authMiddleware, entitiesRoute);
   app.use(`${apiPrefix}vehicles`, vehiclesRoute);
+  app.use(`${apiPrefix}payment`,paymentRoute);
 };
 
 module.exports = {apiPrefix, prepareV1Routes};

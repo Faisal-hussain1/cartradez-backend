@@ -36,7 +36,6 @@ router.post(
 );
 
 router.get('/', catchAsync(VehiclesController.getAllVehicles));
-
 router.get(
   '/cartradez',
   catchAsync(VehiclesController.getAllManagedByCartradezVehicles)

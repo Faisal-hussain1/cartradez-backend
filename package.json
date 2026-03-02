@@ -41,6 +41,7 @@
     "nodemailer": "^8.0.1",
     "serverless-http": "^4.0.0",
     "socket.io": "^4.8.1",
+    "stripe": "^20.4.0",
     "vercel": "^41.0.2",
     "winston": "^3.17.0",
     "winston-transport-sentry-node": "^3.0.0",

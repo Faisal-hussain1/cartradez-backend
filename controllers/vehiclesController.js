@@ -159,7 +159,7 @@ module.exports = class VehiclesController {
         },
         fieldsInclusion: {
           includeSpecificFields: [
-            "_id make model year price currency coverImage listingType",
+            "_id make model year price currency coverImage listingType creatorId",
           ],
         },
       },

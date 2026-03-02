@@ -287,6 +287,8 @@ const VEHICLE_STATUSES = {
   pending: {value: 'pending'},
   active: {value: 'active'},
   sold: {value: 'sold'},
+  draft:{value:'draft'},
+  rejected:{value:'rejected'}
 };
 
 const VEHICLE_STATUSES_VALUES = Object.values(VEHICLE_STATUSES).map(

@@ -19,6 +19,7 @@ const {
   VEHICLE_LISTINGS,
   VEHICLE_BODIES_VALUES,
 } = require('../constants/vehicleConstants');
+const { SYSTEM_ROLES_VALUES } = require('../constants/usersConstants');
 
 const Schema = mongoose.Schema;
 
@@ -87,7 +88,7 @@ const vehiclesSchema = new Schema(
     status: {
       type: String,
       enum: VEHICLE_STATUSES_VALUES,
-      default: VEHICLE_STATUSES.active.value,
+      default: VEHICLE_STATUSES.draft.value,
     },
     events: [
       {
@@ -111,6 +112,35 @@ const vehiclesSchema = new Schema(
       type: Date,
       default: null,
     },
+    publishedAt:{
+      type:Date,
+      default:null
+    },
+    view:{
+      type:Number,
+      default:0
+    },
+    deletedBy:{
+      type:String,
+      enum:SYSTEM_ROLES_VALUES,
+      default:null,
+    },
+    deleteReason:{
+      type:String,
+      default:null,
+    },
+    rejectionReason:{
+      type:String,
+      default:null
+    },
+    soldAt:{
+      type:Date,
+      default:null
+    },
+    paymentId:{
+      type:String,
+      default:null
+    }
 
     // body: {type: String, required: true, enum: VEHICLE_BODIES_VALUES},
     // seats: {type: Number},
