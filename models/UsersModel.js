@@ -57,9 +57,37 @@ const usersSchema = new Schema(
         values: usersConstants.DEALER_STATUS_VALUES,
         message: 'Invalid dealer status',
       },
-      default: null,
+      default: usersConstants.DEALER_STATUS.pending.value,
     },
-
+    nrcNo:{
+      type:String,
+      default:null
+    },
+    experience:{
+      type:Number,
+      default:0
+    },
+    carTypes:{
+      type:String,
+      enum:['new','used','both'],
+      default:'both'
+    },
+    showroomAddress:{
+      type:String,
+      default:null,
+    },
+    ntnNo:{
+      type:String,
+      default:null
+    },
+    socialMedia:{
+      type:String,
+      default:null,
+    },
+    creditsLeft:{
+      type:Number,
+      default:0
+    },
     // 🔴 ===== LOCATION (OPTIONAL FOR ALL) =====
     country: {type: String, default: null,},
     state: {type: String, default: null},

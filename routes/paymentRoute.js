@@ -7,13 +7,12 @@ const stripeHandler=new stripe(process.env.STRIPE_SECRET_KEY);
 
 
 router.post('/',async(req,res)=>{
-    const {userId,vehicleId,currency,image,make,model}=req.body;
-    console.log(image);
+    const {userId,vehicleId,currency,image,make,model,listingType,price}=req.body;
   const  line_items ={
     price_data: {
       currency: currency,
       product_data:{name:`${make} ${model}`,images:[image]},
-      unit_amount:  2000,
+      unit_amount:  price * 100,
     },
     quantity: 1,
   };
@@ -24,11 +23,12 @@ router.post('/',async(req,res)=>{
       line_items: [line_items], 
       mode: 'payment',
       metadata: {
-      vehicleId: vehicleId.toString(),
-      userId: userId.toString(),
+      vehicleId,
+      userId,
+      listingType
     },
-      success_url: `http://localhost:3000/success`,
-      cancel_url: 'http://localhost:3000/cancel',
+      success_url: `http://localhost:3000/payment-success`,
+      cancel_url: 'http://localhost:3000/payment-failed',
     });
 
     res.json({ id: session.id,url: session.url });
@@ -54,17 +54,17 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Payment successful
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
 
       const vehicleId = session.metadata.vehicleId;
 
-      console.log("Payment successful for order: ",vehicleId);
+      console.log("Payment successful for order: ",session);
     }
 
     res.json({ received: true });
   }
 );
+
 
 module.exports=router;

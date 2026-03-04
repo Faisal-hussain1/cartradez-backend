@@ -82,7 +82,7 @@ const vehiclesSchema = new Schema(
     listingType: {
       type: String,
       enum: VEHICLE_LISTINGS_VALUES,
-      default: VEHICLE_LISTINGS.standard.value,
+      default: null,
     },
     isManagedByCartradez: {type: Boolean, default: false},
     status: {

@@ -422,7 +422,6 @@
 
  const config = require('config');
 const mongoose = require('mongoose');
-const cookie=require('cookie');
 
 const {usersConstants, accessConstants} = require('../constants');
 
@@ -702,6 +701,42 @@ return res.status(200).json({
       updateData,
       {new: true}
     );
+
+    next(
+      UsersResponsesFactory.singleUserInfoRetrievedRes({
+        user: updatedUser,
+      })
+    );
+  }
+  static async addDealerInfo(req, res, next) {
+    const user = req.jwtToken.user;
+
+    const allowedFields = [
+      'carTypes',
+      'experience',
+      'nrcNo',
+      'ntnNo',
+       'showroomAddress',
+       'showroomName',
+       'socialMedia',
+       'role'
+    ];
+
+   
+
+    const updateData = {};
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    const updatedUser = await UsersModel.findByIdAndUpdate(
+      user._id,
+      updateData,
+      {new: true}
+    );
+    console.log(updateUser)
 
     next(
       UsersResponsesFactory.singleUserInfoRetrievedRes({

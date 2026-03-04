@@ -21,6 +21,10 @@ const app = express();
 Sentry.setupExpressErrorHandler(app);
 
 app.set('trust proxy', 1);
+app.use(
+  "/api/v1/payment/webhook",
+  express.raw({ type: "application/json" })
+);
 
 app.use(express.json());
 
