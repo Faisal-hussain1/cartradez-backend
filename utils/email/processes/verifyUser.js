@@ -21,4 +21,5 @@ module.exports = async ({user, verifyUrl}) => {
     subject: 'Verify Your CarTradez Account',
     html,
   });
+  return true;
 };

@@ -6,7 +6,7 @@ module.exports = {
   userInvitationTokenExpiry: '1d',
 
   paginationDefaults: {
-    limit: 12,
+    limit: 34,
     page: 1,
   },
 };

@@ -159,7 +159,7 @@ module.exports = class VehiclesController {
         },
         fieldsInclusion: {
           includeSpecificFields: [
-            "_id make model year price currency coverImage listingType creatorId",
+            "_id make model year price currency coverImage listingType creatorId isManagedByCartradez",
           ],
         },
       },
@@ -249,7 +249,7 @@ static async getAllVehiclesOfLoggedInUser(req, res, next) {
             {
               path: 'creatorId',
               select:
-                '_id firstName lastName phoneNumber organizations createdAt',
+                '_id firstName lastName phoneNumber organizations createdAt listingType',
             },
           ],
         },

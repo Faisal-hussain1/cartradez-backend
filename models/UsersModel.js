@@ -120,7 +120,7 @@ const usersSchema = new Schema(
     ],
 
     // ===== TOKENS =====
-    isVerified: {type: Boolean, default: true},
+    isVerified: {type: Boolean, default: false},
     verificationToken: {type: String},
     loginResetToken: {type: String},
 

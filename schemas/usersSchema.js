@@ -58,7 +58,7 @@ module.exports.validateResetPasswordRequest = ({data}) => {
 
 module.exports.validateUserIdParams = ({data}) => {
   const schema = Yup.object().shape({
-    _id: validatorUtils.mongooseIdValidate({name: 'User'}),
+    _id: validatorUtils.mongooseIdValidate({name: 'Users'}),
   });
 
   return validatorUtils.validate({schema, data});

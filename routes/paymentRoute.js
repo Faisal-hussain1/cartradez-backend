@@ -1,5 +1,6 @@
 const express=require('express');
 const stripe=require('stripe');
+const Vehicles=require('../models/VehiclesModel');
 
 
 const router=express.Router();
@@ -58,8 +59,10 @@ router.post(
       const session = event.data.object;
 
       const vehicleId = session.metadata.vehicleId;
-
-      console.log("Payment successful for order: ",session);
+      const listingType=session.metadata.listingType.toLowerCase();
+        await Vehicles.findByIdAndUpdate({_id:vehicleId},{ listingType },
+  { new: true })
+  console.log("Payment successful for order: ",session);
     }
 
     res.json({ received: true });

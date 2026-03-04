@@ -7,5 +7,5 @@ module.exports = async ({user,locale}) => {
     locale,
     params: user.verificationToken,
   });
-  await emailNotificationProcesses.verifyUser({user, verifyUrl});
+  return await emailNotificationProcesses.verifyUser({user, verifyUrl});
 };

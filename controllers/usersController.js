@@ -492,11 +492,13 @@ module.exports = class UsersController {
       // });
       // ✅ CHANGE: Send verification email
       if(createdUser._id){
-      await actions.users.verifyUser({
+      const isVerify=await actions.users.verifyUser({
         user: createdUser,
         locale: getLocaleFromCookie({req}),
       });
+      if(isVerify) createdUser.isVerified=true;
     }
+
 
       // create default organization
       // const {organization, error: organizationError} =
@@ -651,10 +653,13 @@ const token=jwtUtils.generateToken({
       },
       accessExpiry
     });
+    const cleanUser = Object.fromEntries(
+  Object.entries(userToLogin).filter(([_, value]) => value != null)
+);
     
 return res.status(200).json({
   data: {
-    user: userToLogin,
+    user: cleanUser,
     token
   },
   
@@ -703,9 +708,9 @@ return res.status(200).json({
     );
   }
   static async addDealerInfo(req, res, next) {
-    const user = req.jwtToken.user;
-    const _id=req.params._id;
-    console.log(user._id===_id);
+    const user = req.jwtToken;
+    const _id=req.params._id
+    if(_id!==user._id) return res.json({statusCode:400,message:"Invalid User",success:false});
     const allowedFields = [
       'carTypes',
       'experience',
@@ -714,24 +719,20 @@ return res.status(200).json({
        'showroomAddress',
        'showroomName',
        'socialMedia',
-       'role'
     ];
 
    
 
-    const updateData = {};
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
-      }
-    });
-
+    const updateData = Object.fromEntries(
+  Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
+);
+    updateData.systemRole="dealer";
     const updatedUser = await UsersModel.findByIdAndUpdate(
       _id,
       updateData,
       {new: true}
     );
-    if(updatedUser) return res.json({statusCode:201,message:"Dealer Request Submitted. Please wait for admin approval",success:true})
+    if(updatedUser) return res.json({statusCode:201,message:"Dealer Request Submitted. Please wait for admin approval",success:true,updatedUser})
 
   }
 

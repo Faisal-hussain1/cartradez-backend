@@ -16,7 +16,6 @@ module.exports.generateToken = ({payload, expiry}) => {
 module.exports.verifyToken = ({token}) => {
   try {
     const decodedObj = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decodedObj)
     return decodedObj;
   } catch (error) {
     return false;

@@ -9,6 +9,7 @@ module.exports = (req, res, next) => {
   }
   const token = jwtUtils.verifyToken({token: headerToken});
 
+
   if (token) {
     req.jwtToken = token;
     next();

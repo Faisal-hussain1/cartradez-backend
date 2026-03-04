@@ -418,7 +418,7 @@ const VEHICLE_LISTINGS = {
     label: 'Premium',
   },
   quickSell: {
-    value: 'quickSell',
+    value: 'quick sell',
     label: 'Quick Sell',
   },
   standard: {
