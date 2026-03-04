@@ -491,55 +491,49 @@ module.exports = class UsersController {
       //   locale: getLocaleFromCookie({req}) || 'en',
       // });
       // ✅ CHANGE: Send verification email
+      if(createdUser._id){
       await actions.users.verifyUser({
         user: createdUser,
         locale: getLocaleFromCookie({req}),
       });
+    }
 
       // create default organization
-      const {organization, error: organizationError} =
-        await UsersServices.createUserOrganization({
-          organizationData: {
-            organizationName: `${data.firstName}'s Organization`,
-            creatorId: createdUser._id,
-          },
-          session,
-        });
+      // const {organization, error: organizationError} =
+      //   await UsersServices.createUserOrganization({
+      //     organizationData: {
+      //       organizationName: `${data.firstName}'s Organization`,
+      //       creatorId: createdUser._id,
+      //     },
+      //     session,
+      //   });
 
-      if (organizationError) throw organizationError;
+      // if (organizationError) throw organizationError;
 
-      const organizationId = organization._id;
+      // const organizationId = organization._id;
 
       // default permissions
-      const {doc: permissions, error: permissionError} =
-        await GeneralServices.create({
-          model: PermissionsModel,
-          data: {
-            userId: createdUser._id,
-            organizationId,
-            levels: {
-              users: {
-                view: [accessConstants.ACCESS_LEVELS.none],
-                update: [accessConstants.ACCESS_LEVELS.none],
-              },
-              vehicles: {
-                view: [accessConstants.ACCESS_LEVELS.all],
-                update: [],
-                remove: [accessConstants.ACCESS_LEVELS.none],
-              },
-            },
-          },
-          session,
-        });
+      // const {doc: permissions, error: permissionError} =
+      //   await GeneralServices.create({
+      //     model: PermissionsModel,
+      //     data: {
+      //       userId: createdUser._id,
+      //       organizationId,
+      //       levels: {
+      //         users: {
+      //           view: [accessConstants.ACCESS_LEVELS.none],
+      //           update: [accessConstants.ACCESS_LEVELS.none],
+      //         },
+      //         vehicles: {
+      //           view: [accessConstants.ACCESS_LEVELS.all],
+      //           update: [],
+      //           remove: [accessConstants.ACCESS_LEVELS.none],
+      //         },
+      //       },
+      //     },
+      //     session,
+      //   });
 
-      if (permissionError) throw permissionError;
-
-      createdUser.organizations.push({
-        organizationId,
-        permissions: permissions._id,
-        role: usersConstants.SYSTEM_ROLES.user.value,
-        isActive: true,
-      });
 
       await createdUser.save({session});
 
