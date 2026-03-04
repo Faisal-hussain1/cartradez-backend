@@ -710,7 +710,8 @@ return res.status(200).json({
   }
   static async addDealerInfo(req, res, next) {
     const user = req.jwtToken.user;
-
+    const _id=req.params._id;
+    console.log(user._id===_id);
     const allowedFields = [
       'carTypes',
       'experience',
@@ -732,17 +733,12 @@ return res.status(200).json({
     });
 
     const updatedUser = await UsersModel.findByIdAndUpdate(
-      user._id,
+      _id,
       updateData,
       {new: true}
     );
-    console.log(updateUser)
+    if(updatedUser) return res.json({statusCode:201,message:"Dealer Request Submitted. Please wait for admin approval",success:true})
 
-    next(
-      UsersResponsesFactory.singleUserInfoRetrievedRes({
-        user: updatedUser,
-      })
-    );
   }
 
   // =========================

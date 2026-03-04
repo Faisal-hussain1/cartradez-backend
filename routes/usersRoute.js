@@ -159,24 +159,13 @@ router.patch(
 );
 
 router.patch(
-  'dealer-form/:_id',
+  '/dealer-form/:_id',
   authMiddleware,
   validatorMiddleware({
     validateFunction: usersSchema.validateUserIdParams,
     reqProperty: 'params',
   }),
-  validatorMiddleware({
-    validateFunction: usersSchema.validateUpdateUserRequest,
-    reqProperty: 'body',
-  }),
-  catchAsync((req, res, next) => {
-    GeneralController.updateById({
-      model: UsersModel,
-      _id: req.params._id,
-      key: 'User',
-      data: req.body,
-    })(req, res, next);
-  })
+  catchAsync(UsersController.addDealerInfo)
 );
 
 module.exports = router;
