@@ -63,13 +63,9 @@ router.post(
   catchAsync(UsersController.inviteUser)
 );
 
-router.post(
+router.get(
   '/verify/:token',
-  validatorMiddleware({
-    validateFunction: usersSchema.validateVerifyInvitedUserRequest,
-    reqProperty: 'body',
-  }),
-  catchAsync(UsersController.verifyInvitedUser)
+  catchAsync(UsersController.verifyUser)
 );
 
 router.patch(

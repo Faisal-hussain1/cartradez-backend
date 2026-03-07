@@ -14,8 +14,7 @@ const {
   VEHICLE_ACTIONS,
   VEHICLE_STATUSES,
 } = require('../constants/vehicleConstants');
-const {SYSTEM_ROLES} = require('../constants/usersConstants');
-const { dataUpdatedSuccessfully } = require('../factories/responses/general');
+const {SYSTEM_ROLES} = require('../constants/usersConstants');``
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {

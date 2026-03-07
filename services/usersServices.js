@@ -1,6 +1,5 @@
 const {MongosFactory} = require('../factories');
 const {UsersModel} = require('../models');
-const OrganizationsModel = require('../models/OrganizationsModel');
 const {passwordsUtils} = require('../utils');
 const {asyncTryCatch} = require('../utils/tryCatchUtils');
 
@@ -49,16 +48,6 @@ module.exports = class UsersServices {
     });
 
     return {success, user: doc, error};
-  }
-
-  static async createUserOrganization({organizationData, session}) {
-    const {doc, error, success} = await MongosFactory.create({
-      model: OrganizationsModel,
-      data: organizationData,
-      session,
-    });
-
-    return {success, organization: doc, error};
   }
 
   static async verifyUserPassword({inputPassword, dbPassword}) {
