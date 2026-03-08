@@ -10,7 +10,7 @@ const {
 } = require('../factories');
 
 const {UsersModel} = require('../models');
-const {UsersServices} = require('../services');
+const {UsersServices, FileServices} = require('../services');
 
 const {jwtUtils, createOptions, getLocaleFromCookie} = require('../utils');
 
@@ -63,13 +63,8 @@ module.exports = class UsersController {
 
       createdUser.generateVerificationToken();
 
-      // await actions.users.verifyUser({
-      //   user: createdUser,
-      //   locale: getLocaleFromCookie({req}) || 'en',
-      // });
-      // ✅ CHANGE: Send verification email
       if(createdUser._id){
-      const isVerify=await actions.users.verifyUser({
+      await actions.users.verifyUser({
         user: createdUser,
         locale: getLocaleFromCookie({req}),
       });
@@ -205,42 +200,64 @@ return res.status(200).json({
   // =========================
   // UPDATE PROFILE (ALL USERS)
   // =========================
-  static async updateProfile(req, res, next) {
-    const user = req.jwtToken.user;
+ static async updateProfile(req, res, next) {
+  const user = req.jwtToken;
 
-    const allowedFields = [
-      'firstName',
-      'lastName',
-      'phoneNumber',
-      'country',
-      'state',
-      'city',
-      'address',
-    ];
+  const allowedFields = [
+    "firstName",
+    "lastName",
+    "phoneNumber",
+    "country",
+    "state",
+    "city",
+    "address",
+    "profileImage"
+  ];
 
-    if (user.systemRole === usersConstants.SYSTEM_ROLES.dealer.value) {
-      allowedFields.push('showroomName');
+  if (user.systemRole === usersConstants.SYSTEM_ROLES.dealer.value) {
+    allowedFields.push("showroomName");
+  }
+
+  const updateData = {};
+
+  allowedFields.forEach((field) => {
+    if (req.body[field] !== undefined) {
+      updateData[field] = req.body[field];
+    }
+  });
+  try {
+
+    /* PROFILE IMAGE UPLOAD */
+
+    if (req.file) {
+
+      const image = await FileServices.uploadSingleFile({
+        file: req.file,
+        fileDir: `profile-image_${user._id}`,
+      });
+      // since schema expects string
+      updateData.profileImage = image.url;
     }
 
-    const updateData = {};
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        updateData[field] = req.body[field];
-      }
-    });
 
     const updatedUser = await UsersModel.findByIdAndUpdate(
       user._id,
       updateData,
-      {new: true}
+      { new: true }
     );
 
-    next(
-      UsersResponsesFactory.singleUserInfoRetrievedRes({
-        user: updatedUser,
-      })
-    );
+    if (updatedUser) {
+      return res.json({
+        statusCode: 201,
+        message: "User updated!",
+        data: { user: updatedUser },
+      });
+    }
+
+  } catch (error) {
+    return next(error);
   }
+}
   static async addDealerInfo(req, res, next) {
     const user = req.jwtToken;
     const _id=req.params._id

@@ -31,6 +31,10 @@ const usersSchema = new Schema(
       minlength: 4,
       maxlength: 255,
     },
+    profileImage:{
+      type:String,
+      default:null
+    },
     password: {
       type: String,
       required: [true, 'User must have a password'],

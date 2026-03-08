@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+const upload = multer();
 
 const {
   accessConstants: {SYSTEM_ENTITIES},
@@ -130,28 +132,10 @@ router.patch(
 );
 
 router.patch(
-  '/:_id',
+  '/update-profile',
   authMiddleware,
-  validatorMiddleware({
-    validateFunction: usersSchema.validateUserIdParams,
-    reqProperty: 'params',
-  }),
-  aclAccessMiddleware({
-    entityToCheck: SYSTEM_ENTITIES.users.value,
-    permissionKey: 'update',
-  }),
-  validatorMiddleware({
-    validateFunction: usersSchema.validateUpdateUserRequest,
-    reqProperty: 'body',
-  }),
-  catchAsync((req, res, next) => {
-    GeneralController.updateById({
-      model: UsersModel,
-      _id: req.params._id,
-      key: 'User',
-      data: req.body,
-    })(req, res, next);
-  })
+  upload.single('profileImage'),
+  catchAsync(UsersController.updateProfile)
 );
 
 router.patch(
