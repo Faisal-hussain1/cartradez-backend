@@ -1,5 +1,5 @@
 const logger = require('./loggerMiddleware');
-const {verifyToken, getToken} = require('../utils/jwtUtils');
+const {verifyToken} = require('../utils/jwtUtils');
 
 module.exports = (socket, next) => {
   const token = socket.handshake.auth.token;

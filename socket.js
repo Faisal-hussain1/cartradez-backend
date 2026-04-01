@@ -11,14 +11,12 @@ module.exports.prepare = ({ app }) => {
   const server = http.createServer(app);
 
   const io = setSocket({
-    server,
-    options: {
-      cors: {
-        origin: corsOrigins,
-        credentials: true,
-      },
-    },
-  });
+  server,
+  options: {
+    cors: { origin: corsOrigins, credentials: true },
+    transports: ["websocket", "polling"], // ← add this
+  },
+});
 
   // ✅ AUTH
   io.use(socketJWTMiddleware);
