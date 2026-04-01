@@ -5,6 +5,8 @@ const config = require('config');
 const mongoose = require('mongoose');
 
 const logger = require('../middleware/loggerMiddleware');
+const dns=require("dns");
+dns.setServers(["1.1.1.1","8.8.8.8"]);
 
 let conn;
 

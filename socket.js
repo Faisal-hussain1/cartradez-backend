@@ -1,53 +1,119 @@
 const http = require('http');
-
 const config = require('config');
 
-const {socketJWTMiddleware, logger} = require('./middleware');
+const socketJWTMiddleware = require('./middleware/socketJWTMiddleware');
+const { setSocket } = require('./socketInstance');
+const { corsOrigins } = require('./utils');
 
-const {setSocket} = require('./socketInstance');
+const Chat = require("./models/chatModel");
 
-const {corsOrigins} = require('./utils');
-
-const {sendPrivateSocketMessage} = require('./utils/socketUtils');
-
-module.exports.prepare = ({app}) => {
+module.exports.prepare = ({ app }) => {
   const server = http.createServer(app);
-
-  const cors = {origin: corsOrigins, credentials: true};
 
   const io = setSocket({
     server,
     options: {
-      cors,
+      cors: {
+        origin: corsOrigins,
+        credentials: true,
+      },
     },
   });
 
+  // ✅ AUTH
   io.use(socketJWTMiddleware);
 
+  // 🔥 store online users
+  const users = {}; // { userId: socketId }
+
+  io.on("connection", (socket) => {
+    const userId = socket.user._id.toString();
+
+    // ✅ store user
+    users[userId] = socket.id;
+
+    // 🔥 broadcast online users
+    io.emit("onlineUsers", Object.keys(users));
+
+    /* ================= SEND MESSAGE ================= */
+    socket.on("sendMessage", async ({ to, message }) => {
+  try {
+    const from = userId;
+
+    await Chat.create({
+      from,
+      to,
+      message,
+      isRead: false,
+    });
+
+    // 🔥 GET FULL CHAT BETWEEN USERS
+    const updatedMessages = await Chat.find({
+      $or: [
+        { from, to },
+        { from: to, to: from },
+      ],
+    }).sort({ createdAt: 1 });
+
+    // 🔥 SEND TO RECEIVER
+    if (users[to]) {
+      io.to(users[to]).emit("messagesUpdated", updatedMessages);
+    }
+
+    // 🔥 SEND TO SENDER
+    socket.emit("messagesUpdated", updatedMessages);
+
+    // 🔥 UPDATE INBOX
+    io.emit("inboxUpdate");
+
+  } catch (err) {
+    console.log("CHAT ERROR:", err);
+  }
+});
+
+    /* ================= MARK AS READ ================= */
+   socket.on("markAsRead", async ({ from }) => {
+  try {
+    await Chat.updateMany(
+      { from, to: userId, isRead: false },
+      { isRead: true }
+    );
+
+    // 🔥 GET UPDATED CHAT
+    const updatedMessages = await Chat.find({
+      $or: [
+        { from: userId, to: from },
+        { from: from, to: userId },
+      ],
+    }).sort({ createdAt: 1 });
+
+    // 🔥 SEND TO BOTH USERS
+    if (users[from]) {
+      io.to(users[from]).emit("messagesUpdated", updatedMessages);
+    }
+
+    socket.emit("messagesUpdated", updatedMessages);
+
+  } catch (err) {
+    console.log("READ ERROR:", err);
+  }
+});
+    /* ================= DISCONNECT ================= */
+    socket.on("disconnect", () => {
+      delete users[userId];
+      // 🔥 update online list
+      io.emit("onlineUsers", Object.keys(users));
+    });
+  });
+
+  // ✅ start server
   if (config.get('env') !== config.get('envVariables.test')) {
     const PORT = config.get('port') || 3001;
 
     server.listen(PORT, () => {
-      logger.info(`Server is listening on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   }
-
-  io.on('connection', (socket) => {
-    const organizationId = socket.organizationId;
-
-    if (!organizationId) return;
-
-    socket.join(organizationId);
-
-    // Send a private socket message to all clients in the specified organization room
-    sendPrivateSocketMessage({
-      data: 'Hello from server',
-      event: 'message',
-      room: organizationId,
-    });
-
-    socket.on('disconnect', () => socket.leave(organizationId));
-  });
 
   return io;
 };

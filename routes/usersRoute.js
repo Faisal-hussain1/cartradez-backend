@@ -138,6 +138,8 @@ router.patch(
   catchAsync(UsersController.updateProfile)
 );
 
+router.get("/:id", UsersController.getUserById);
+
 router.patch(
   '/dealer-form/:_id',
   authMiddleware,

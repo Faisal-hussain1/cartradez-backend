@@ -130,6 +130,41 @@ module.exports = class UsersController {
     }
   }
 
+  static async  getUserById(req, res) {
+  try {
+    const { id } = req.params;
+
+    // ✅ validate id
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    // ✅ find user (exclude sensitive fields)
+    const user = await UsersModel
+      .findById(id)
+      .select("-password -__v");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data:user,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
   // =========================
   // LOGIN
   // =========================

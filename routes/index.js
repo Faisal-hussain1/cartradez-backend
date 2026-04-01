@@ -3,7 +3,8 @@ const publicRoute = require(`./publicRoute`);
 const privateRoute = require(`./privateRoute.js`);
 const entitiesRoute = require(`./entitiesRoute.js`);
 const vehiclesRoute = require('./vehiclesRoutes.js');
-const paymentRoute=require('./paymentRoute.js')
+const paymentRoute=require('./paymentRoute.js');
+const chatRoute=require("./chatRouter.js");
 
 module.exports = {
   usersRoute,
@@ -11,5 +12,6 @@ module.exports = {
   privateRoute,
   entitiesRoute,
   vehiclesRoute,
-  paymentRoute
+  paymentRoute,
+  chatRoute,
 };

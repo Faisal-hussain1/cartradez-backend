@@ -6,7 +6,8 @@ const {
   privateRoute,
   entitiesRoute,
   vehiclesRoute,
-  paymentRoute
+  paymentRoute,
+  chatRoute
 } = require(`../routes`);
 
 const apiPrefix = '/api/v1/';
@@ -18,6 +19,7 @@ const prepareV1Routes = ({app}) => {
   app.use(`${apiPrefix}entities`, authMiddleware, entitiesRoute);
   app.use(`${apiPrefix}vehicles`, vehiclesRoute);
   app.use(`${apiPrefix}payment`,paymentRoute);
+  app.use(`${apiPrefix}chat`,chatRoute);
 };
 
 module.exports = {apiPrefix, prepareV1Routes};
