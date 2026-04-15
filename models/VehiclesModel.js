@@ -84,6 +84,8 @@ const vehiclesSchema = new Schema(
       enum: VEHICLE_LISTINGS_VALUES,
       default: null,
     },
+    isUpgraded:{type:Boolean,default:false},
+    
     isManagedByCartradez: {type: Boolean, default: false},
     status: {
       type: String,

@@ -421,6 +421,30 @@ return res.status(200).json({
     next(UsersResponsesFactory.passwordResetSuccessfully());
   }
 
+  static async acceptTerms(req,res){
+    const isLoggedIn=req.jwtToken;
+    const user=await UsersModel.findById(isLoggedIn?._id);
+
+    if(!user) return res.status(400).json({msg:"User Not found"});
+
+    user.termsAccepted=true;
+
+    await user.save();
+
+    return res.status(400).json({msg:"Terms and conditions accepted",user});
+  }
+
+  static async acceptPrivacy(req,res){
+    const isLoggedIn=req.jwtToken;
+    const user=await UsersModel.findById(isLoggedIn?._id);
+
+    if(!user) return res.status(400).json({msg:"User Not found"});
+
+    user.privacyAccepted=true;
+    await user.save();
+    return res.status(400).json({msg:"Privacy policy accepted accepted",user});
+  }
+
   // =========================
   // LOGOUT
   // =========================

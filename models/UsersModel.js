@@ -31,6 +31,14 @@ const usersSchema = new Schema(
       minlength: 4,
       maxlength: 255,
     },
+    termsAccepted:{
+      type:Boolean,
+      default:false
+    },
+    privacyAccepted:{
+      type:Boolean,
+      default:false
+    },
     profileImage:{
       type:String,
       default:null

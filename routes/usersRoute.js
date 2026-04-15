@@ -121,6 +121,9 @@ router.delete(
   catchAsync(UsersController.deleteUser)
 );
 
+router.get(`/accept-terms`, authMiddleware,catchAsync(UsersController.acceptTerms))
+router.get(`/accept-privacy`, authMiddleware,catchAsync(UsersController.acceptPrivacy))
+
 router.patch(
   '/language',
   authMiddleware,
