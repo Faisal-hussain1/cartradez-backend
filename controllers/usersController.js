@@ -69,6 +69,9 @@ module.exports = class UsersController {
         locale: getLocaleFromCookie({req}),
       });
     }
+
+      createdUser.termsAccepted=req.body.acceptTerms;
+      createdUser.privacyAccepted=req.body.acceptPrivacy;
       await createdUser.save({session});
 
       await session.commitTransaction();

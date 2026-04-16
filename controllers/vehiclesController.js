@@ -248,7 +248,7 @@ static async getAllVehiclesOfLoggedInUser(req, res, next) {
             {
               path: 'creatorId',
               select:
-                '_id firstName lastName phoneNumber organizations createdAt listingType',
+                '_id firstName lastName phoneNumber organizations createdAt listingType address city country',
             },
           ],
         },
