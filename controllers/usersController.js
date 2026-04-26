@@ -1,4 +1,4 @@
- const config = require('config');
+const config = require('config');
 const mongoose = require('mongoose');
 
 const {usersConstants, accessConstants} = require('../constants');
@@ -63,20 +63,23 @@ module.exports = class UsersController {
 
       createdUser.generateVerificationToken();
 
-      if(createdUser._id){
-      await actions.users.verifyUser({
-        user: createdUser,
-        locale: getLocaleFromCookie({req}),
-      });
-    }
+      if (createdUser._id) {
+        await actions.users.verifyUser({
+          user: createdUser,
+          locale: getLocaleFromCookie({req}),
+        });
+      }
 
-      createdUser.termsAccepted=req.body.acceptTerms;
-      createdUser.privacyAccepted=req.body.acceptPrivacy;
+      createdUser.termsAccepted = req.body.acceptTerms;
+      createdUser.privacyAccepted = req.body.acceptPrivacy;
       await createdUser.save({session});
 
       await session.commitTransaction();
 
-      next(UsersResponsesFactory.userRegisteredSuccessfully());
+      return res.status(200).json({
+        success: true,
+        message: 'User registered successfully',
+      });
     } catch (error) {
       if (session) await session.abortTransaction();
       throw error;
@@ -89,7 +92,6 @@ module.exports = class UsersController {
     try {
       const token = req.params.token;
       const decodedToken = jwtUtils.verifyToken({token});
-      
 
       if (!decodedToken) {
         return res.status(400).json({
@@ -133,41 +135,39 @@ module.exports = class UsersController {
     }
   }
 
-  static async  getUserById(req, res) {
-  try {
-    const { id } = req.params;
+  static async getUserById(req, res) {
+    try {
+      const {id} = req.params;
 
-    // ✅ validate id
-    if (!id) {
-      return res.status(400).json({
+      // ✅ validate id
+      if (!id) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required',
+        });
+      }
+
+      // ✅ find user (exclude sensitive fields)
+      const user = await UsersModel.findById(id).select('-password -__v');
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      return res.status(500).json({
         success: false,
-        message: "User ID is required",
+        message: error.message,
       });
     }
-
-    // ✅ find user (exclude sensitive fields)
-    const user = await UsersModel
-      .findById(id)
-      .select("-password -__v");
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data:user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
   }
-}
   // =========================
   // LOGIN
   // =========================
@@ -213,116 +213,118 @@ module.exports = class UsersController {
     //     isLoginRequest: true,
     //   })
     // );
-    const accessExpiry=process.env.JWT_ACCESS_EXPIRY;
+    const accessExpiry = process.env.JWT_ACCESS_EXPIRY;
 
-const token=jwtUtils.generateToken({
+    const token = jwtUtils.generateToken({
       payload: {
         _id: userToLogin._id,
         email: userToLogin.email,
         systemRole: userToLogin.systemRole,
       },
-      accessExpiry
+      accessExpiry,
     });
-    
-return res.status(200).json({
-  data: {
-    user: userToLogin,
-    token
-  },
-  
-  message: 'Logged in successfully',
-  success: true,
-});
+
+    return res.status(200).json({
+      data: {
+        user: userToLogin,
+        token,
+      },
+
+      message: 'Logged in successfully',
+      success: true,
+    });
   }
 
   // =========================
   // UPDATE PROFILE (ALL USERS)
   // =========================
- static async updateProfile(req, res, next) {
-  const user = req.jwtToken;
+  static async updateProfile(req, res, next) {
+    const user = req.jwtToken;
 
-  const allowedFields = [
-    "firstName",
-    "lastName",
-    "phoneNumber",
-    "country",
-    "state",
-    "city",
-    "address",
-    "profileImage"
-  ];
+    const allowedFields = [
+      'firstName',
+      'lastName',
+      'phoneNumber',
+      'country',
+      'state',
+      'city',
+      'address',
+      'profileImage',
+    ];
 
-  if (user.systemRole === usersConstants.SYSTEM_ROLES.dealer.value) {
-    allowedFields.push("showroomName");
+    if (user.systemRole === usersConstants.SYSTEM_ROLES.dealer.value) {
+      allowedFields.push('showroomName');
+    }
+
+    const updateData = {};
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+    try {
+      /* PROFILE IMAGE UPLOAD */
+
+      if (req.file) {
+        const image = await FileServices.uploadSingleFile({
+          file: req.file,
+          fileDir: `profile-image_${user._id}`,
+        });
+        // since schema expects string
+        updateData.profileImage = image.url;
+      }
+
+      const updatedUser = await UsersModel.findByIdAndUpdate(
+        user._id,
+        updateData,
+        {new: true}
+      );
+
+      if (updatedUser) {
+        return res.json({
+          statusCode: 201,
+          message: 'User updated!',
+          data: {user: updatedUser},
+        });
+      }
+    } catch (error) {
+      return next(error);
+    }
   }
-
-  const updateData = {};
-
-  allowedFields.forEach((field) => {
-    if (req.body[field] !== undefined) {
-      updateData[field] = req.body[field];
-    }
-  });
-  try {
-
-    /* PROFILE IMAGE UPLOAD */
-
-    if (req.file) {
-
-      const image = await FileServices.uploadSingleFile({
-        file: req.file,
-        fileDir: `profile-image_${user._id}`,
-      });
-      // since schema expects string
-      updateData.profileImage = image.url;
-    }
-
-
-    const updatedUser = await UsersModel.findByIdAndUpdate(
-      user._id,
-      updateData,
-      { new: true }
-    );
-
-    if (updatedUser) {
-      return res.json({
-        statusCode: 201,
-        message: "User updated!",
-        data: { user: updatedUser },
-      });
-    }
-
-  } catch (error) {
-    return next(error);
-  }
-}
   static async addDealerInfo(req, res, next) {
     const user = req.jwtToken;
-    const _id=req.params._id
-    if(_id!==user._id) return res.json({statusCode:400,message:"Invalid User",success:false});
+    const _id = req.params._id;
+    if (_id !== user._id)
+      return res.json({
+        statusCode: 400,
+        message: 'Invalid User',
+        success: false,
+      });
     const allowedFields = [
       'carTypes',
       'experience',
       'nrcNo',
       'ntnNo',
-       'showroomAddress',
-       'showroomName',
-       'socialMedia',
+      'showroomAddress',
+      'showroomName',
+      'socialMedia',
     ];
 
-   
-
     const updateData = Object.fromEntries(
-  Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
-);
-    updateData.systemRole="dealer";
-    const updatedUser = await UsersModel.findByIdAndUpdate(
-      _id,
-      updateData,
-      {new: true}
+      Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
     );
-    if(updatedUser) return res.json({statusCode:201,message:"Dealer Request Submitted. Please wait for admin approval",success:true,updatedUser})
-
+    updateData.systemRole = 'dealer';
+    const updatedUser = await UsersModel.findByIdAndUpdate(_id, updateData, {
+      new: true,
+    });
+    if (updatedUser)
+      return res.json({
+        statusCode: 201,
+        message: 'Dealer Request Submitted. Please wait for admin approval',
+        success: true,
+        updatedUser,
+      });
   }
 
   // =========================
@@ -401,7 +403,7 @@ return res.status(200).json({
 
     next(UsersResponsesFactory.resetPasswordLinkGeneratedSuccessfully());
   }
-  
+
   static async resetPassword(req, res, next) {
     const token = req.params.token;
     const decodedToken = jwtUtils.verifyToken({token});
@@ -424,28 +426,30 @@ return res.status(200).json({
     next(UsersResponsesFactory.passwordResetSuccessfully());
   }
 
-  static async acceptTerms(req,res){
-    const isLoggedIn=req.jwtToken;
-    const user=await UsersModel.findById(isLoggedIn?._id);
+  static async acceptTerms(req, res) {
+    const isLoggedIn = req.jwtToken;
+    const user = await UsersModel.findById(isLoggedIn?._id);
 
-    if(!user) return res.status(400).json({msg:"User Not found"});
+    if (!user) return res.status(400).json({msg: 'User Not found'});
 
-    user.termsAccepted=true;
+    user.termsAccepted = true;
 
     await user.save();
 
-    return res.status(400).json({msg:"Terms and conditions accepted",user});
+    return res.status(400).json({msg: 'Terms and conditions accepted', user});
   }
 
-  static async acceptPrivacy(req,res){
-    const isLoggedIn=req.jwtToken;
-    const user=await UsersModel.findById(isLoggedIn?._id);
+  static async acceptPrivacy(req, res) {
+    const isLoggedIn = req.jwtToken;
+    const user = await UsersModel.findById(isLoggedIn?._id);
 
-    if(!user) return res.status(400).json({msg:"User Not found"});
+    if (!user) return res.status(400).json({msg: 'User Not found'});
 
-    user.privacyAccepted=true;
+    user.privacyAccepted = true;
     await user.save();
-    return res.status(400).json({msg:"Privacy policy accepted accepted",user});
+    return res
+      .status(400)
+      .json({msg: 'Privacy policy accepted accepted', user});
   }
 
   // =========================
