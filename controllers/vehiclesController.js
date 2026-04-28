@@ -21,9 +21,9 @@ module.exports = class VehiclesController {
     const data = req.body;
     const loggedInUser = req.jwtToken;
     if (!loggedInUser) {
-  return next(VehiclesErrorsFactory.unauthorizedErr?.() || {
+  return res.json({
     statusCode: 401,
-    message: "Unauthorized",
+    message: "Something went wrong while authenticating user. Please login again.",
   });
 }
 
