@@ -30,6 +30,13 @@ module.exports.validateCreateRequest = ({data: user}) => {
   const schema = Yup.object().shape({
     ...commonAuthSchema,
     role: Yup.string().oneOf(usersConstants.SYSTEM_ROLES_VALUES),
+    systemRole: Yup.string().oneOf(usersConstants.SYSTEM_ROLES_VALUES),
+    city: Yup.string().nullable(),
+    address: Yup.string().nullable(),
+    country: Yup.string().nullable(),
+    state: Yup.string().nullable(),
+    acceptTerms: Yup.boolean().nullable(),
+    acceptPrivacy: Yup.boolean().nullable(),
   });
 
   return validatorUtils.validate({schema, data: user});

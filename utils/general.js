@@ -8,9 +8,7 @@ module.exports.isEnvProd =
 
 module.exports.isEnvDev = config.get('env') === config.get('envVariables.dev');
 
-module.exports.corsOrigins = this.isEnvProd
-  ? config.get('allowedOrigins').split(',')
-  : true;
+module.exports.corsOrigins = true;
 
 module.exports.createOptions = ({
   extraQueries = null,

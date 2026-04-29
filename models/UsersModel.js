@@ -23,7 +23,7 @@ const usersSchema = new Schema(
     },
     phoneNumber: {
       type: String,
-      required: [true, 'User must have a phone number'],
+      default: null,
     },
     email: {
       type: String,
@@ -43,12 +43,22 @@ const usersSchema = new Schema(
       type:String,
       default:null
     },
+    isGoogleOAuthUser: {
+      type: Boolean,
+      default: false,
+    },
     password: {
       type: String,
-      required: [true, 'User must have a password'],
       minlength: 8,
       maxlength: 2048,
       select: false,
+      validate: {
+        validator: function(value) {
+          // Password is required unless user is a Google OAuth user
+          return this.isGoogleOAuthUser || value;
+        },
+        message: 'User must have a password',
+      },
     },
 
     // 🔴 ===== SYSTEM ROLE (NEW) =====
@@ -103,8 +113,28 @@ const usersSchema = new Schema(
     // 🔴 ===== LOCATION (OPTIONAL FOR ALL) =====
     country: {type: String, default: null,},
     state: {type: String, default: null},
-    city: {type: String,required:true},
-    address: {type: String,required:true},
+    city: {
+      type: String,
+      validate: {
+        validator: function(value) {
+          // City is required unless user is a Google OAuth user
+          return this.isGoogleOAuthUser || value;
+        },
+        message: 'City is required',
+      },
+      default: null,
+    },
+    address: {
+      type: String,
+      validate: {
+        validator: function(value) {
+          // Address is required unless user is a Google OAuth user
+          return this.isGoogleOAuthUser || value;
+        },
+        message: 'Address is required',
+      },
+      default: null,
+    },
 
     // 🔴 ===== ADMIN CONTROL =====
     isBlocked: {type: Boolean, default: false},

@@ -21,6 +21,13 @@ const app = express();
 Sentry.setupExpressErrorHandler(app);
 
 app.set('trust proxy', 1);
+
+// Add COOP header to allow cross-origin window checks
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
+
 app.use(
   "/api/v1/payment/webhook",
   express.raw({ type: "application/json" })
@@ -30,7 +37,7 @@ app.use(express.json());
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cors({origin: corsOrigins, credentials: true}));
+app.use(cors({origin: true, credentials: true}));
 
 app.use(ddosProtectionMiddleware);
 v1.prepareV1Routes({app});

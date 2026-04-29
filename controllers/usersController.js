@@ -1,5 +1,7 @@
 const config = require('config');
 const mongoose = require('mongoose');
+const axios = require('axios');
+const {getOAuth2Client} = require("../utils/googleAuth")
 
 const {usersConstants, accessConstants} = require('../constants');
 
@@ -18,6 +20,7 @@ const actions = require('../utils/actions');
 const {getCookieDomain} = require('../utils/urlUtils');
 const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const {LOCALES} = require('../constants/generalConstant');
+const { first } = require('lodash');
 
 module.exports = class UsersController {
   // =========================
@@ -87,6 +90,181 @@ module.exports = class UsersController {
       if (session) session.endSession();
     }
   }
+
+  static async googleLogin(req, res, next) {
+    try {
+      const {code} = req.query;
+
+      if (!code) {
+        throw GeneralErrorsFactory.badRequestErr();
+      }
+
+      // Get the OAuth2 client (lazy initialized)
+      const oauth2client = getOAuth2Client();
+
+      // Exchange authorization code for tokens
+      const googleRes = await oauth2client.getToken(code);
+      oauth2client.setCredentials(googleRes.tokens);
+
+      // Get user info from Google
+      const userRes = await axios.get(
+        `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
+      );
+      const {given_name, family_name, email, picture} = userRes.data;
+
+      // Check if user exists
+      let {user, error} = await UsersServices.getUserByEmail({email});
+      if (error) throw error;
+
+      let isNewUser = false;
+
+      // If user exists, log them in
+      if (user) {
+        // Generate JWT tokens for existing user
+        const accessToken = jwtUtils.generateToken({
+          payload: {_id: user._id, email: user.email},
+          expiry: process.env.JWT_ACCESS_EXPIRY || '10d',
+        });
+
+        const refreshToken = jwtUtils.generateToken({
+          payload: {_id: user._id, email: user.email},
+          expiry: '7d',
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: 'Login successful',
+          isNewUser: false,
+          needsAdditionalInfo: false,
+          user,
+          accessToken,
+        });
+      }
+
+      // For new users, return data without saving to DB yet
+      // User will be saved only after completing signup form with phone, city, country, address
+      isNewUser = true;
+      const tempAccessToken = jwtUtils.generateToken({
+        payload: {email},
+        expiry: '15m', // Short lived token for completing signup
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Please complete your profile to finish signup',
+        isNewUser: true,
+        needsAdditionalInfo: true,
+        tempAccessToken, // Token for completing signup
+        googleUserData: {
+          firstName: given_name,
+          lastName: family_name,
+          email,
+          profileImage: picture,
+        },
+        user: null, // User not saved to DB yet
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async completeGoogleSignup(req, res, next) {
+    try {
+      const {
+        tempAccessToken,
+        phoneNumber,
+        city,
+        address,
+        country,
+        firstName,
+        lastName,
+        profileImage,
+        acceptTerms,
+        acceptPrivacy,
+      } = req.body;
+
+      if (
+        !tempAccessToken ||
+        !phoneNumber ||
+        !city ||
+        !address ||
+        !country ||
+        !firstName ||
+        !lastName ||
+        acceptTerms !== true ||
+        acceptPrivacy !== true
+      ) {
+        throw GeneralErrorsFactory.badRequestErr();
+      }
+
+      const decodedToken = jwtUtils.verifyToken({token: tempAccessToken});
+      if (!decodedToken || !decodedToken.email) {
+        throw GeneralErrorsFactory.badRequestErr();
+      }
+
+      const email = decodedToken.email;
+      const {user: existingUser, error} = await UsersServices.getUserByEmail({email});
+      if (error) throw error;
+
+      let user = existingUser;
+
+      if (!user) {
+        const {user: createdUser, error: userCreationError} =
+          await UsersServices.createUser({
+            data: {
+              firstName,
+              lastName,
+              email,
+              phoneNumber,
+              city,
+              address,
+              country,
+              profileImage: profileImage || null,
+              systemRole: usersConstants.SYSTEM_ROLES.user.value,
+              isGoogleOAuthUser: true,
+              isVerified: true,
+              termsAccepted: true,
+              privacyAccepted: true,
+            },
+          });
+
+        if (userCreationError) throw userCreationError;
+        user = createdUser;
+      } else {
+        user.termsAccepted = true;
+        user.privacyAccepted = true;
+        await user.save();
+      }
+
+      const accessToken = jwtUtils.generateToken({
+        payload: {_id: user._id, email: user.email},
+        expiry: process.env.JWT_ACCESS_EXPIRY,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Google signup completed successfully',
+        user: {
+          _id: user._id,
+          id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          profileImage: user.profileImage,
+          systemRole: user.systemRole,
+          country: user.country,
+          city: user.city,
+          address: user.address,
+          isVerified: user.isVerified,
+        },
+        accessToken,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
 
   static async verifyUser(req, res, next) {
     try {
@@ -250,6 +428,8 @@ module.exports = class UsersController {
       'city',
       'address',
       'profileImage',
+      'termsAccepted',
+      'privacyAccepted',
     ];
 
     if (user.systemRole === usersConstants.SYSTEM_ROLES.dealer.value) {

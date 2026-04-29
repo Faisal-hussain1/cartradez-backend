@@ -122,7 +122,9 @@ router.delete(
 );
 
 router.get(`/accept-terms`, authMiddleware,catchAsync(UsersController.acceptTerms))
-router.get(`/accept-privacy`, authMiddleware,catchAsync(UsersController.acceptPrivacy))
+router.get(`/accept-privacy`, authMiddleware,catchAsync(UsersController.acceptPrivacy));
+router.get("/google/auth", catchAsync(UsersController.googleLogin));
+router.post("/google/complete-signup", catchAsync(UsersController.completeGoogleSignup));
 
 router.patch(
   '/language',
