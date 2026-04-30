@@ -5,4 +5,7 @@ module.exports.VEHICLE_ERRORS_TYPES = {
   vehicleLessImages: {
     value: 'VEHICLE_LESS_IMAGES',
   },
+  vehicleMoreImages: {
+    value: 'VEHICLE_MORE_IMAGES',
+  },
 };

@@ -28,8 +28,7 @@ module.exports.checkAllowedRoles =
   ({allowedRoles}) =>
   async ({req}) => {
     if (!req.jwtToken) return false;
-    const {systemRole} = req.jwtToken;
-    console.log(systemRole)
+    const systemRole = req.jwtToken.systemRole || req.jwtToken.role;
 
     return allowedRoles.includes(systemRole);
   };

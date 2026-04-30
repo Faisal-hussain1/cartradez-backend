@@ -21,12 +21,17 @@ router.post(
   authMiddleware,
   accessMiddleware({
     customFn: checkAllowedRoles({
-      allowedRoles: [SYSTEM_ROLES.admin.value, SYSTEM_ROLES.user.value],
+      allowedRoles: [
+        SYSTEM_ROLES.admin.value,
+        SYSTEM_ROLES.user.value,
+        SYSTEM_ROLES.dealer.value,
+      ],
     }),
   }),
   fileUploadMiddleware({
     allowedTypes: ALLOWED_FILE_TYPES,
     multiple: true,
+    maxFiles: 9,
   }),
   validatorMiddleware({
     validateFunction: vehiclesSchema.validateCreateVehicleRequest,

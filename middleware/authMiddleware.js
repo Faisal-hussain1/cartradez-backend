@@ -3,12 +3,13 @@ const {GeneralErrorsFactory} = require('../factories');
 const jwtUtils = require('../utils/jwtUtils');
 
 module.exports = (req, res, next) => {
-  const headerToken = req.headers['authorization'].split(' ')[1];
-  if(!headerToken){
-    console.log("Missing Token")
-  }
-  const token = jwtUtils.verifyToken({token: headerToken});
+  const authHeader = req.headers['authorization'];
+  const headerToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.split(' ')[1]
+    : null;
+  if (!headerToken) return next(GeneralErrorsFactory.invalidTokenErr());
 
+  const token = jwtUtils.verifyToken({token: headerToken});
 
   if (token) {
     req.jwtToken = token;

@@ -122,12 +122,20 @@ module.exports = class UsersController {
       if (user) {
         // Generate JWT tokens for existing user
         const accessToken = jwtUtils.generateToken({
-          payload: {_id: user._id, email: user.email},
+          payload: {
+            _id: user._id,
+            email: user.email,
+            systemRole: user.systemRole,
+          },
           expiry: process.env.JWT_ACCESS_EXPIRY || '10d',
         });
 
         const refreshToken = jwtUtils.generateToken({
-          payload: {_id: user._id, email: user.email},
+          payload: {
+            _id: user._id,
+            email: user.email,
+            systemRole: user.systemRole,
+          },
           expiry: '7d',
         });
 
@@ -237,7 +245,11 @@ module.exports = class UsersController {
       }
 
       const accessToken = jwtUtils.generateToken({
-        payload: {_id: user._id, email: user.email},
+        payload: {
+          _id: user._id,
+          email: user.email,
+          systemRole: user.systemRole,
+        },
         expiry: process.env.JWT_ACCESS_EXPIRY,
       });
 

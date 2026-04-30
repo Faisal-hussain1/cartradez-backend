@@ -20,4 +20,12 @@ module.exports = class UsersErrorsFactory {
       error: {type: VEHICLE_ERRORS_TYPES.vehicleLessImages.value},
     });
   }
+
+  static vehicleMoreImagesErr() {
+    return new AppError({
+      message: 'You can upload a maximum of 9 images',
+      statusCode: 400,
+      error: {type: VEHICLE_ERRORS_TYPES.vehicleMoreImages.value},
+    });
+  }
 };

@@ -14,7 +14,7 @@ const {
   VEHICLE_ACTIONS,
   VEHICLE_STATUSES,
 } = require('../constants/vehicleConstants');
-const {SYSTEM_ROLES} = require('../constants/usersConstants');``
+const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
@@ -40,6 +40,8 @@ module.exports = class VehiclesController {
 
     if (req?.files && req.files.length < 3)
       return next(VehiclesErrorsFactory.vehicleLessImagesErr());
+    if (req?.files && req.files.length > 9)
+      return next(VehiclesErrorsFactory.vehicleMoreImagesErr());
 
     try {
       data.creatorId = loggedInUser?._id;

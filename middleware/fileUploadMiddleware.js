@@ -10,6 +10,7 @@ module.exports = ({
   fileSizeLimit = 5 * 1024 * 1024, // 5 MB limit
   require = true, // Default to require a file upload if not specified
   multiple = false, // Default to single file upload if not specified
+  maxFiles,
 }) => {
   // Use memory storage to keep files in memory
   const storage = multer.memoryStorage();
@@ -52,7 +53,9 @@ module.exports = ({
   // Return a middleware function that handles both single and multiple file uploads
   return (req, res, next) => {
     // Determine the upload function based on the `multiple` option
-    const uploadFn = multiple ? upload.array('files') : upload.single('file');
+    const uploadFn = multiple
+      ? upload.array('files', maxFiles)
+      : upload.single('file');
     // Invoke the upload function
     uploadFn(req, res, (err) => {
       if (err) {
