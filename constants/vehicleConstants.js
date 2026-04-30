@@ -18,7 +18,6 @@ const VEHICLE_MAKES = {
   tesla: {value: 'tesla', label: 'Tesla'},
   landrover: {value: 'landrover', label: 'Land Rover'},
   rangerover: {value: 'rangerover', label: 'Range Rover'},
-  Volkswagen: {value: 'volkswagen', label: 'Volkswagen (VW)'},
   proton: {value: 'proton', label: 'Proton'},
   daihatsu: {value: 'daihatsu', label: 'Daihatsu'},
   subaru: {value: 'subaru', label: 'Subaru'},
