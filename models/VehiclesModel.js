@@ -25,29 +25,27 @@ const Schema = mongoose.Schema;
 
 const vehiclesSchema = new Schema(
   {
-    make: {type: String, required: true, enum: VEHICLE_MAKES_VALUES},
+    make: {type: String, required: true},
     model: {type: String, required: true},
-    variant: {type: String},
+    variant: {type: String, default:null},
     year: {type: Number, required: true},
-    condition: {type: String, required: true, enum: VEHICLE_CONDITIONS_VALUES},
-    bodyType: {type: String, required: true, enum: VEHICLE_BODIES_VALUES},
-    color: {type: String, required: true},
-    mileage: {type: Number, required: true},
+    condition: {type: String, default:null},
+    bodyType: {type: String, default:null},
+    color: {type: String, default:null},
+    mileage: {type: Number, default:null},
     engineSize: {
       type: Number,
-      required: true,
+      default: null,
     },
     transmission: {
       type: String,
-      enum: VEHICLE_TRANSMISSION_TYPES_VALUES,
-      required: true,
+      default: null,
     },
     fuelType: {
       type: String,
-      enum: VEHICLE_FUEL_TYPES_VALUES,
-      required: true,
+      default: null,
     },
-    driveType: {type: String, required: true, enum: VEHICLE_DRIVE_VALUES},
+    driveType: {type: String, default:null},
     currency: {
       type: String,
       required: true,
@@ -55,12 +53,12 @@ const vehiclesSchema = new Schema(
       default: VEHICLE_CURRENCY_TYPES.usd.value,
     },
     price: {type: Number, required: true},
-    registrationCity: {type: String, required: true},
-    registrationYear: {type: Number, required: true},
-    registrationNumber: {type: String, required: true},
-    numberOfOwners: {type: Number, required: true},
+    registrationCity: {type: String, default:null},
+    registrationYear: {type: String, default:null},
+    registrationNumber: {type: String, default:null},
+    numberOfOwners: {type: String, default:null},
     features: [{type: String}],
-    description: {type: String, required: true},
+    description: {type: String, default:null},
     images: [
       {
         key: {type: String,},

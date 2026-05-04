@@ -263,6 +263,7 @@ const VEHICLE_FUEL_TYPES = {
   cngGas: {value: 'cngGas', label: 'CNG Gas'},
   electric: {value: 'electric', label: 'Electric'},
   hybrid: {value: 'hybrid', label: 'Hybrid'},
+  gasoline: {value: 'gasoline', label: 'Gasoline'},
 };
 
 const VEHICLE_FUEL_TYPES_VALUES = Object.values(VEHICLE_FUEL_TYPES).map(

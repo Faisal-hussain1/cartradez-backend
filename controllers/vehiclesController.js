@@ -20,6 +20,7 @@ module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
     const data = req.body;
     const loggedInUser = req.jwtToken;
+    console.log(loggedInUser)
     if (!loggedInUser) {
   return res.json({
     statusCode: 401,
@@ -57,18 +58,18 @@ module.exports = class VehiclesController {
       session = await mongoose.startSession();
       session.startTransaction();
 
+
+
       const {doc: createdVehicle, error: vehicleCreationError} =
         await GeneralServices.create({
           model: VehiclesModel,
           data: data,
           session,
         });
-
-         
       if (vehicleCreationError) throw vehicleCreationError;
       if (!createdVehicle) throw new Error("Vehicle creation failed");
 
-      createdVehicleId = createdVehicle?._id.toString();
+      createdVehicleId = createdVehicle?._id?.toString();
 
 
       if (req?.files && req.files.length > 0) {

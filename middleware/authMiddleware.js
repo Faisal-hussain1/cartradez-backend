@@ -10,7 +10,7 @@ module.exports = (req, res, next) => {
   if (!headerToken) return next(GeneralErrorsFactory.invalidTokenErr());
 
   const token = jwtUtils.verifyToken({token: headerToken});
-
+  
   if (token) {
     req.jwtToken = token;
     next();

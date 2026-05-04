@@ -59,6 +59,13 @@ module.exports = ({
     // Invoke the upload function
     uploadFn(req, res, (err) => {
       if (err) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return next(
+            GeneralErrorsFactory.badRequestErr({
+              customMessage: `File is too large. Each file must be ${(fileSizeLimit / (1024 * 1024)).toFixed(0)} MB or smaller.`,
+            })
+          );
+        }
         // If an error occurs during file upload, pass it to the error handler
         return next(err);
       }
