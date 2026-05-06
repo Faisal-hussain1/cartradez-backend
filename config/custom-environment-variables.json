@@ -17,5 +17,8 @@
   "awsAccessKey": "AWS_ACCESS_KEY",
   "awsSecretAccessKey": "AWS_SECRET_ACCESS_KEY",
   "awsBucket": "AWS_BUCKET",
-  "awsBucketRegion": "AWS_BUCKET_REGION"
+  "awsBucketRegion": "AWS_BUCKET_REGION",
+  "cloudinaryCloudName": "CLOUDINARY_CLOUD_NAME",
+  "cloudinaryApiKey": "CLOUDINARY_API_KEY",
+  "cloudinaryApiSecret": "CLOUDINARY_API_SECRET"
 }

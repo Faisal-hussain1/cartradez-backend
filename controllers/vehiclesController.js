@@ -193,7 +193,6 @@ module.exports = class VehiclesController {
   static async deleteVehicle(req, res, next) {
     const vehicleId = req.params.id;
     const loggedInUser = req.jwtToken;
-
     if (!loggedInUser)
       return res.status(401).json({success: false, message: 'Something went wrong while authenticating user. Please login again.'});
 
@@ -213,10 +212,8 @@ module.exports = class VehiclesController {
 
       if (existingVehicle.images?.length > 0) {
         for (const image of existingVehicle.images) {
-          const fileKey = image.key?.startsWith(`vehicle-image_${vehicleId}/`)
-            ? image.key
-            : `vehicle-image_${vehicleId}/${image.key}`;
-          await FileServices.deleteFile({key: fileKey});
+          // image.key is already the Cloudinary public_id, use it directly
+          await FileServices.deleteFile({key: image.key});
         }
       }
 

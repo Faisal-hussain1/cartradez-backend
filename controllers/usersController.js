@@ -476,7 +476,7 @@ module.exports = class UsersController {
       if (updatedUser) {
         return res.json({
           statusCode: 201,
-          message: 'User updated!',
+          message: 'Profile updated!',
           data: {user: updatedUser},
         });
       }

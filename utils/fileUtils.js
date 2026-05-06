@@ -1,38 +1,38 @@
-const {
-  S3Client,
-  DeleteObjectCommand,
-  HeadObjectCommand,
-} = require('@aws-sdk/client-s3');
-const {Upload} = require('@aws-sdk/lib-storage');
+const cloudinary = require('cloudinary').v2;
 const config = require('config');
 
 const {FILE_NOT_FOUND} = require('../constants/file');
 const logger = require('../middleware/loggerMiddleware');
 
-const accessKeyId = config.get('awsAccessKey');
-const secretAccessKey = config.get('awsSecretAccessKey');
-const Bucket = config.get('awsBucket');
-const region = config.get('awsBucketRegion');
-
-const client = new S3Client({
-  region,
-  credentials: {accessKeyId, secretAccessKey},
-});
+// Helper function to ensure Cloudinary is configured
+function ensureCloudinaryConfigured() {
+  cloudinary.config({
+    cloud_name: config.get('cloudinaryCloudName'),
+    api_key: config.get('cloudinaryApiKey'),
+    api_secret: config.get('cloudinaryApiSecret'),
+  });
+}
 
 module.exports.uploadFile = async ({filePath, file, fileName}) => {
   try {
-    const upload = new Upload({
-      client,
-      params: {
-        Bucket,
-        Key: filePath,
-        Body: file.buffer,
-      },
+    ensureCloudinaryConfigured();
+    // Upload file to Cloudinary from buffer
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'cartradez', // Store in 'cartradez' folder
+          public_id: filePath.replace(/\//g, '_'), // Use filePath as public_id
+          resource_type: 'auto', // Auto-detect resource type
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(file.buffer);
     });
 
-    const data = await upload.done();
-
-    return {url: data.Location, key: fileName};
+    return {url: result.secure_url, key: result.public_id};
   } catch (err) {
     logger.error(err);
     throw err;
@@ -41,12 +41,9 @@ module.exports.uploadFile = async ({filePath, file, fileName}) => {
 
 module.exports.deleteFile = async ({key}) => {
   try {
-    const command = new DeleteObjectCommand({
-      Bucket,
-      Key: key,
-    });
-    await client.send(command);
-
+    ensureCloudinaryConfigured();
+    // Delete file from Cloudinary
+    await cloudinary.uploader.destroy(key, {resource_type: 'image'});
     return {key};
   } catch (err) {
     logger.error(err);
@@ -56,19 +53,20 @@ module.exports.deleteFile = async ({key}) => {
 
 module.exports.getFile = async ({key}) => {
   try {
-    const command = new HeadObjectCommand({
-      Bucket,
-      Key: key,
-    });
-    await client.send(command); // Check if the file exists
-    const encoded = encodeURIComponent(key);
-    const fileUrl = `https://${Bucket}.s3.${region}.amazonaws.com/${encoded}`;
-
-    return {url: fileUrl, key};
-  } catch (err) {
-    if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
+    ensureCloudinaryConfigured();
+    // Get file info from Cloudinary
+    const result = await cloudinary.api.resource(key);
+    
+    if (!result) {
       return {url: null, key, error: FILE_NOT_FOUND};
     }
+
+    return {url: result.secure_url, key};
+  } catch (err) {
+    if (err.http_code === 404) {
+      return {url: null, key, error: FILE_NOT_FOUND};
+    }
+    logger.error(err);
     throw err;
   }
 };

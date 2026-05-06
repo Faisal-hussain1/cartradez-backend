@@ -24,5 +24,9 @@
   "awsAccessKey": "",
   "awsSecretAccessKey": "",
   "awsBucket": "",
-  "awsBucketRegion": ""
+  "awsBucketRegion": "",
+
+  "cloudinaryCloudName": "",
+  "cloudinaryApiKey": "",
+  "cloudinaryApiSecret": "",
 }
