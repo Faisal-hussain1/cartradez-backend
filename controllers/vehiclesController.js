@@ -37,11 +37,13 @@ module.exports = class VehiclesController {
       createdVehicleId = createdVehicle?._id?.toString();
 
       if (req?.files?.length > 0) {
-        for (const file of req.files) {
-          const image = await FileServices.uploadSingleFile({file, fileDir: `vehicle-image_${createdVehicleId}`});
-          awsFileKeys.push(image.key);
-          vehicleImages.push(image);
-        }
+        // Upload all images in parallel instead of sequentially
+        const uploadPromises = req.files.map(file =>
+          FileServices.uploadSingleFile({file, fileDir: `vehicle-image_${createdVehicleId}`})
+        );
+        const uploadedImages = await Promise.all(uploadPromises);
+        vehicleImages.push(...uploadedImages);
+        awsFileKeys.push(...uploadedImages.map(img => img.key));
       }
 
       createdVehicle.images = vehicleImages;
@@ -52,7 +54,10 @@ module.exports = class VehiclesController {
 
       return res.json({statusCode: 201, message: 'Vehicle added successfully', success: true});
     } catch (error) {
-      for (const key of awsFileKeys) await FileServices.deleteFile({key: `vehicle-image_${createdVehicleId}/${key}`});
+      // Delete uploaded files in parallel on error
+      if (awsFileKeys.length > 0) {
+        await Promise.all(awsFileKeys.map(key => FileServices.deleteFile({key})));
+      }
       if (session) { await session.abortTransaction(); session.endSession(); }
       throw error;
     }
@@ -210,11 +215,12 @@ module.exports = class VehiclesController {
       session = await mongoose.startSession();
       session.startTransaction();
 
+      // Delete all images in parallel instead of sequentially
       if (existingVehicle.images?.length > 0) {
-        for (const image of existingVehicle.images) {
-          // image.key is already the Cloudinary public_id, use it directly
-          await FileServices.deleteFile({key: image.key});
-        }
+        const deletePromises = existingVehicle.images.map(image =>
+          FileServices.deleteFile({key: image.key})
+        );
+        await Promise.all(deletePromises);
       }
 
       // FIX: previous code did `const del = await VehiclesModel.findByIdAndDelete(...)`
