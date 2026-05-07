@@ -211,17 +211,12 @@ module.exports = class VehiclesController {
       return res.status(403).json({success: false, message: 'You are not authorized to delete this vehicle.'});
 
     let session;
+    const imageKeys = (existingVehicle.images || [])
+      .map((image) => image?.key)
+      .filter(Boolean);
     try {
       session = await mongoose.startSession();
       session.startTransaction();
-
-      // Delete all images in parallel instead of sequentially
-      if (existingVehicle.images?.length > 0) {
-        const deletePromises = existingVehicle.images.map(image =>
-          FileServices.deleteFile({key: image.key})
-        );
-        await Promise.all(deletePromises);
-      }
 
       // FIX: previous code did `const del = await VehiclesModel.findByIdAndDelete(...)`
       // then referenced undeclared `deleteErr` → ReferenceError crash.
@@ -232,6 +227,12 @@ module.exports = class VehiclesController {
 
       await session.commitTransaction();
       session.endSession();
+
+      // Run Cloudinary cleanup outside request lifecycle so live delete responds fast.
+      // Failures are logged but do not block user-facing deletion.
+      if (imageKeys.length > 0) {
+        Promise.allSettled(imageKeys.map((key) => FileServices.deleteFile({key}))).catch(() => {});
+      }
 
       return res.status(200).json({statusCode: 200, message: 'Vehicle deleted successfully', success: true});
     } catch (error) {
