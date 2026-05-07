@@ -39,6 +39,12 @@ router.post(
 );
 
 router.get(
+  '/stats/active-listings-count',
+  authMiddleware,
+  catchAsync(VehiclesController.getActiveListingsCount)
+);
+
+router.get(
   '/cartradez',
   catchAsync(VehiclesController.getAllManagedByCartradezVehicles)
 );
@@ -59,6 +65,7 @@ router.patch(
   '/:id',
   authMiddleware,
   allowedRoles,
+  fileUploadMiddleware({allowedTypes: ALLOWED_FILE_TYPES, multiple: true, maxFiles: 9, require: false}),
   catchAsync(VehiclesController.updateVehicle)
 );
 

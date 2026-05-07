@@ -20,4 +20,13 @@ module.exports = class FileServices {
 
     return result;
   }
+
+  static async replaceFileByKey({file, key}) {
+    const fileObj = await fileUtils.uploadFileByPublicId({
+      publicId: key,
+      file,
+    });
+
+    return fileObj;
+  }
 };

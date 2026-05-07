@@ -187,7 +187,13 @@ module.exports = class VehiclesController {
       return res.status(401).json({success: false, message: 'Something went wrong while authenticating user. Please login again.'});
 
     const body = req.body || {};
-    if (Object.keys(body).length === 0)
+    const hasFiles = Array.isArray(req.files) && req.files.length > 0;
+    const removedImageKeysRaw = body['removedImageKeys[]'] || body.removedImageKeys || [];
+    const removedImageKeys = Array.isArray(removedImageKeysRaw)
+      ? removedImageKeysRaw
+      : removedImageKeysRaw ? [removedImageKeysRaw] : [];
+    const hasImageMutation = hasFiles || removedImageKeys.length > 0;
+    if (!hasImageMutation && Object.keys(body).length === 0)
       return res.status(400).json({success: false, message: 'Request body is empty. Please send vehicle update data.'});
 
     const {doc: existingVehicle, error: findErr} = await GeneralServices.findOne({model: VehiclesModel, query: {_id: vehicleId}});
@@ -209,8 +215,92 @@ module.exports = class VehiclesController {
     const setData = {};
     allowedFields.forEach((field) => { if (body[field] !== undefined) setData[field] = body[field]; });
 
-    if (Object.keys(setData).length === 0)
+    if (!hasImageMutation && Object.keys(setData).length === 0)
       return res.status(400).json({success: false, message: 'No valid vehicle fields provided for update.'});
+
+    if (body['features[]']) {
+      const featuresArr = Array.isArray(body['features[]']) ? body['features[]'] : [body['features[]']];
+      setData.features = featuresArr.filter(Boolean);
+    }
+
+    if (typeof setData.features === 'string') {
+      setData.features = setData.features
+        .split(',')
+        .map((feature) => feature.trim())
+        .filter(Boolean);
+    }
+
+    if (hasImageMutation) {
+      const allFiles = Array.isArray(req.files) ? req.files : [];
+      const replaceImageKeysRaw = body['replaceImageKeys[]'] || body.replaceImageKeys || [];
+      const replaceImageKeys = Array.isArray(replaceImageKeysRaw)
+        ? replaceImageKeysRaw
+        : replaceImageKeysRaw ? [replaceImageKeysRaw] : [];
+
+      if (replaceImageKeys.length > allFiles.length) {
+        return res.status(400).json({success: false, message: 'Image replacement payload is invalid.'});
+      }
+
+      const replacementFiles = allFiles.slice(0, replaceImageKeys.length);
+      const newFiles = allFiles.slice(replaceImageKeys.length);
+
+      let workingImages = [...(existingVehicle.images || [])];
+
+      if (removedImageKeys.length > 0) {
+        workingImages = workingImages.filter((img) => !removedImageKeys.includes(img?.key));
+      }
+
+      if (replaceImageKeys.length > 0) {
+        if (replaceImageKeys.length !== replacementFiles.length) {
+          return res.status(400).json({success: false, message: 'Image replacement payload is invalid.'});
+        }
+
+        const keyToIndex = new Map(workingImages.map((img, idx) => [img.key, idx]));
+        const replacedImages = await Promise.all(
+          replacementFiles.map((file, index) =>
+            FileServices.replaceFileByKey({file, key: replaceImageKeys[index]})
+          )
+        );
+
+        replacedImages.forEach((uploadedImage, idx) => {
+          const targetKey = replaceImageKeys[idx];
+          const targetIndex = keyToIndex.get(targetKey);
+          if (targetIndex !== undefined) {
+            workingImages[targetIndex] = uploadedImage;
+          }
+        });
+      }
+
+      if (newFiles.length > 0) {
+        const uploadedNewImages = await Promise.all(
+          newFiles.map((file) =>
+            FileServices.uploadSingleFile({file, fileDir: `vehicle-image_${vehicleId}`})
+          )
+        );
+        workingImages = [...workingImages, ...uploadedNewImages];
+      }
+
+      if (workingImages.length > 9) {
+        return res.status(400).json({success: false, message: 'Maximum of 9 images allowed.'});
+      }
+      if (workingImages.length < 1) {
+        return res.status(400).json({success: false, message: 'At least one image is required.'});
+      }
+
+      setData.images = workingImages;
+      if (removedImageKeys.includes(existingVehicle?.coverImage?.key)) {
+        setData.coverImage = workingImages[0];
+      } else if (existingVehicle?.coverImage?.key) {
+        const updatedCover = workingImages.find((img) => img.key === existingVehicle.coverImage.key);
+        setData.coverImage = updatedCover || workingImages[0];
+      } else {
+        setData.coverImage = workingImages[0];
+      }
+
+      if (removedImageKeys.length > 0) {
+        Promise.allSettled(removedImageKeys.map((key) => FileServices.deleteFile({key}))).catch(() => {});
+      }
+    }
 
     const updateQuery = {
       $set: setData,
@@ -307,5 +397,33 @@ module.exports = class VehiclesController {
     if (vehiclesRetrievedError) throw vehiclesRetrievedError;
 
     return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({vehicles: retrievedVehicles, count, page, limit, totalPages: Math.ceil(count / limit)}));
+  }
+
+  static async getActiveListingsCount(req, res, next) {
+    const loggedInUser = req.jwtToken;
+
+    if (!loggedInUser)
+      return res.json({statusCode: 401, message: 'Something went wrong while authenticating user. Please login again.'});
+
+    try {
+      const query = {listingType: {$ne: null}, creatorId: loggedInUser._id};
+      const {count, error: countErr} = await GeneralServices.countDocuments({
+        model: VehiclesModel,
+        query,
+      });
+
+      if (countErr) throw countErr;
+
+      return res.json({
+        statusCode: 200,
+        success: true,
+        message: 'Active listings count retrieved successfully',
+        body: {
+          count,
+        },
+      });
+    } catch (err) {
+      return next(err);
+    }
   }
 };

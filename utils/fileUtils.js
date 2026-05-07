@@ -38,6 +38,33 @@ module.exports.uploadFile = async ({filePath, file, fileName}) => {
   }
 };
 
+module.exports.uploadFileByPublicId = async ({publicId, file}) => {
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'cartradez',
+          public_id: publicId,
+          overwrite: true,
+          resource_type: 'auto',
+          quality: 'auto',
+          fetch_format: 'auto',
+        },
+        (error, uploadResult) => {
+          if (error) reject(error);
+          else resolve(uploadResult);
+        }
+      );
+      stream.end(file.buffer);
+    });
+
+    return {url: result.secure_url, key: result.public_id};
+  } catch (err) {
+    logger.error(err);
+    throw err;
+  }
+};
+
 module.exports.deleteFile = async ({key}) => {
   try {
     // Delete file from Cloudinary
