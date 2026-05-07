@@ -173,4 +173,10 @@ const vehiclesSchema = new Schema(
 // Use the hide timestamps plugin
 vehiclesSchema.plugin(hideTimestampsPlugin);
 
+// Query/index optimizations for high-traffic listing endpoints
+vehiclesSchema.index({creatorId: 1, createdAt: -1});
+vehiclesSchema.index({isManagedByCartradez: 1, createdAt: -1});
+vehiclesSchema.index({listingType: 1, createdAt: -1});
+vehiclesSchema.index({status: 1, createdAt: -1});
+
 module.exports = mongoose.model('Vehicles', vehiclesSchema);

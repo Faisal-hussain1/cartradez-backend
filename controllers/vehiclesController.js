@@ -76,10 +76,26 @@ module.exports = class VehiclesController {
     }
 
     try {
-      const {count, error: countError} = await GeneralServices.countDocuments({model: VehiclesModel, query});
+      const [countResult, docsResult] = await Promise.all([
+        GeneralServices.countDocuments({model: VehiclesModel, query}),
+        GeneralServices.find({
+          model: VehiclesModel,
+          query,
+          options: {
+            queryProperties: {skip, limit, sort: {createdAt: -1}},
+            fieldsInclusion: {
+              includeSpecificFields: [
+                '_id make model year price currency coverImage listingType creatorId isManagedByCartradez',
+              ],
+            },
+          },
+        }),
+      ]);
+
+      const {count, error: countError} = countResult;
       if (countError) throw countError;
 
-      const {docs, error} = await GeneralServices.find({model: VehiclesModel, query, options: {queryProperties: {skip, limit, sort: {createdAt: -1}}, fieldsInclusion: {includeSpecificFields: ['_id make model year price currency coverImage listingType creatorId isManagedByCartradez']}}});
+      const {docs, error} = docsResult;
       if (error) throw error;
 
       return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({vehicles: docs, count, page, limit, totalPages: Math.ceil(count / limit)}));
@@ -102,21 +118,26 @@ module.exports = class VehiclesController {
 
     try {
       const query = {creatorId: loggedInUserId};
-      const {count, error: countError} = await GeneralServices.countDocuments({model: VehiclesModel, query});
+      const [countResult, docsResult] = await Promise.all([
+        GeneralServices.countDocuments({model: VehiclesModel, query}),
+        GeneralServices.find({
+          model: VehiclesModel,
+          query,
+          options: {
+            queryProperties: {skip, limit, sort: {createdAt: -1}},
+            fieldsInclusion: {
+              includeSpecificFields: [
+                '_id make model variant year price currency listingType coverImage creatorId createdAt mileage fuelType transmission bodyType color condition engineSize driveType description features status numberOfOwners registrationCity registrationYear registrationNumber',
+              ],
+            },
+          },
+        }),
+      ]);
+
+      const {count, error: countError} = countResult;
       if (countError) throw countError;
 
-      const {docs, error} = await GeneralServices.find({
-        model: VehiclesModel, query,
-        options: {
-          queryProperties: {skip, limit, sort: {createdAt: -1}},
-          // All fields needed by the expanded edit modal
-          fieldsInclusion: {
-            includeSpecificFields: [
-              '_id make model variant year price currency listingType coverImage creatorId createdAt mileage fuelType transmission bodyType color condition engineSize doors seats driveType description city country features status',
-            ],
-          },
-        },
-      });
+      const {docs, error} = docsResult;
       if (error) throw error;
 
       return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({vehicles: docs, count, page, limit, totalPages: Math.ceil(count / limit)}));
@@ -131,8 +152,17 @@ module.exports = class VehiclesController {
       model: VehiclesModel,
       query: {_id: vehicleId},
       options: {
-        fieldsInclusion: {include: ['createdAt']},
-        populateFields: [{path: 'creatorId', select: '_id firstName lastName phoneNumber organizations createdAt listingType address city country'}],
+        fieldsInclusion: {
+          includeSpecificFields: [
+            '_id make model variant year condition bodyType color mileage engineSize transmission fuelType driveType currency price registrationCity registrationYear registrationNumber numberOfOwners features description images coverImage listingType creatorId createdAt',
+          ],
+        },
+        populateFields: [
+          {
+            path: 'creatorId',
+            select: '_id firstName lastName phoneNumber createdAt address city country',
+          },
+        ],
       },
     });
 
@@ -246,9 +276,6 @@ module.exports = class VehiclesController {
     const page = parseInt(req.query.page) || generalConstant.paginationDefaults.page;
     const skip = (page - 1) * limit;
 
-    const {count, error: countErr} = await GeneralServices.countDocuments({model: VehiclesModel, query: {isManagedByCartradez: true}});
-    if (countErr) throw countErr;
-
     const search = req.query.search?.trim();
     const query = {isManagedByCartradez: true};
 
@@ -257,10 +284,26 @@ module.exports = class VehiclesController {
       query.$and = keywords.map((word) => ({$or: [{make: {$regex: word, $options: 'i'}}, {model: {$regex: word, $options: 'i'}}, {variant: {$regex: word, $options: 'i'}}]}));
     }
 
-    const {docs: retrievedVehicles, error: vehiclesRetrievedError} = await GeneralServices.find({
-      model: VehiclesModel, query,
-      options: {queryProperties: {skip, limit, sort: {createdAt: -1}}, fieldsInclusion: {includeSpecificFields: ['_id make model price currency coverImage']}},
-    });
+    const [countResult, docsResult] = await Promise.all([
+      GeneralServices.countDocuments({model: VehiclesModel, query}),
+      GeneralServices.find({
+        model: VehiclesModel,
+        query,
+        options: {
+          queryProperties: {skip, limit, sort: {createdAt: -1}},
+          fieldsInclusion: {
+            includeSpecificFields: [
+              '_id make model year price currency coverImage listingType',
+            ],
+          },
+        },
+      }),
+    ]);
+
+    const {count, error: countErr} = countResult;
+    if (countErr) throw countErr;
+
+    const {docs: retrievedVehicles, error: vehiclesRetrievedError} = docsResult;
     if (vehiclesRetrievedError) throw vehiclesRetrievedError;
 
     return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({vehicles: retrievedVehicles, count, page, limit, totalPages: Math.ceil(count / limit)}));
