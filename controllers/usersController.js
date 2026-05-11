@@ -127,7 +127,7 @@ module.exports = class UsersController {
             email: user.email,
             systemRole: user.systemRole,
           },
-          expiry: process.env.JWT_ACCESS_EXPIRY || '10d',
+          expiry: process.env.JWT_ACCESS_EXPIRY || '30d',
         });
 
         const refreshToken = jwtUtils.generateToken({
@@ -136,7 +136,7 @@ module.exports = class UsersController {
             email: user.email,
             systemRole: user.systemRole,
           },
-          expiry: '7d',
+          expiry: process.env.JWT_REFRESH_EXPIRY || '30d',
         });
 
         return res.status(200).json({
@@ -507,9 +507,24 @@ module.exports = class UsersController {
       Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
     );
     updateData.systemRole = 'dealer';
+    updateData.requestLimit = 3;
+    updateData.dealerStatus = usersConstants.DEALER_STATUS.pending.value;
+    updateData.approved = false;
+    updateData.rejected = false;
+    updateData.rejectReason = null;
     const updatedUser = await UsersModel.findByIdAndUpdate(_id, updateData, {
       new: true,
     });
+    if (updatedUser) {
+      updatedUser.dealerStatusHistory = updatedUser.dealerStatusHistory || [];
+      updatedUser.dealerStatusHistory.push({
+        status: usersConstants.DEALER_STATUS.pending.value,
+        reason: 'Dealer request submitted',
+        updatedBy: user._id,
+        updatedAt: new Date(),
+      });
+      await updatedUser.save();
+    }
     if (updatedUser)
       return res.json({
         statusCode: 201,
@@ -517,6 +532,150 @@ module.exports = class UsersController {
         success: true,
         updatedUser,
       });
+  }
+
+  static async getDealers(req, res, next) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+
+    const dealers = await UsersModel.find({
+      $or: [
+        {showroomName: {$exists: true, $ne: null, $nin: ['']}},
+        {showroomAddress: {$exists: true, $ne: null, $nin: ['']}},
+        {'dealerStatusHistory.0': {$exists: true}},
+      ],
+    })
+      .select('-password')
+      .sort({updatedAt: -1});
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dealers fetched successfully',
+      data: dealers,
+    });
+  }
+
+  static async getDealerById(req, res, next) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+
+    const dealer = await UsersModel.findById(req.params.id).select('-password');
+    if (!dealer) {
+      return res
+        .status(404)
+        .json({success: false, message: 'Dealer not found'});
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Dealer fetched successfully',
+      data: dealer,
+    });
+  }
+
+  static async updateDealerStatus(req, res, next) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+
+    const {status, rejectReason} = req.body || {};
+    if (
+      ![
+        usersConstants.DEALER_STATUS.approved.value,
+        usersConstants.DEALER_STATUS.rejected.value,
+      ].includes(status)
+    ) {
+      return res.status(400).json({success: false, message: 'Invalid status'});
+    }
+
+    if (
+      status === usersConstants.DEALER_STATUS.rejected.value &&
+      (!rejectReason || !String(rejectReason).trim())
+    ) {
+      return res
+        .status(400)
+        .json({success: false, message: 'Reject reason is required'});
+    }
+
+    const dealer = await UsersModel.findById(req.params.id).select(
+      'email firstName lastName dealerStatus'
+    );
+    if (!dealer) {
+      return res
+        .status(404)
+        .json({success: false, message: 'Dealer not found'});
+    }
+    const historyEntry = {
+      status,
+      reason:
+        status === usersConstants.DEALER_STATUS.rejected.value
+          ? String(rejectReason).trim()
+          : 'Dealer request approved by admin',
+      updatedBy: req?.jwtToken?._id || null,
+      updatedAt: new Date(),
+    };
+
+    const setData = {
+      dealerStatus: status,
+    };
+
+    if (status === usersConstants.DEALER_STATUS.approved.value) {
+      setData.systemRole = usersConstants.SYSTEM_ROLES.dealer.value;
+      setData.approved = true;
+      setData.rejected = false;
+      setData.rejectReason = null;
+    }
+
+    if (status === usersConstants.DEALER_STATUS.rejected.value) {
+      setData.systemRole = usersConstants.SYSTEM_ROLES.user.value;
+      setData.approved = false;
+      setData.rejected = true;
+      setData.rejectReason = String(rejectReason).trim();
+      setData.showroomName = null;
+      setData.nrcNo = null;
+      setData.experience = 0;
+      setData.carTypes = null;
+      setData.showroomAddress = null;
+      setData.ntnNo = null;
+      setData.socialMedia = null;
+      setData.creditsLeft = 0;
+      setData.requestLimit = 0;
+    }
+
+    const updatedDealer = await UsersModel.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: setData,
+        $push: {dealerStatusHistory: historyEntry},
+      },
+      {new: true}
+    );
+
+    try {
+      await actions.users.dealerDecision({
+        user: updatedDealer,
+        status,
+        reason: status === usersConstants.DEALER_STATUS.rejected.value
+          ? String(rejectReason).trim()
+          : null,
+      });
+    } catch (emailError) {
+      console.log('Dealer status email error:', emailError?.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message:
+        status === usersConstants.DEALER_STATUS.approved.value
+          ? 'Dealer approved successfully'
+          : 'Dealer rejected successfully',
+      data: updatedDealer,
+    });
   }
 
   // =========================
@@ -557,8 +716,11 @@ module.exports = class UsersController {
   // GET LOGGED IN USER
   // =========================
   static async getLoggedInUserInformation(req, res, next) {
+    const loggedInUserId = req?.jwtToken?.user?._id || req?.jwtToken?._id;
+    if (!loggedInUserId) throw UsersErrorsFactory.userNotFoundErr();
+
     const {user} = await UsersServices.getUserById({
-      _id: req.jwtToken.user._id,
+      _id: loggedInUserId,
     });
 
     if (!user) throw UsersErrorsFactory.userNotFoundErr();

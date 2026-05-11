@@ -91,7 +91,7 @@ const usersSchema = new Schema(
     },
     carTypes:{
       type:String,
-      enum:['new','used','both'],
+      enum:['new','used','both', null],
       default:'both'
     },
     showroomAddress:{
@@ -110,6 +110,37 @@ const usersSchema = new Schema(
       type:Number,
       default:0
     },
+    rejected:{
+      type:Boolean,
+      default:false
+    },
+    rejectReason:{
+      type:String,
+      default:null
+    },
+    requestLimit:{
+      type:Number,
+      default:0,
+      enum:[0,1,2,3]
+    },
+    dealerStatusHistory: [
+      {
+        status: {
+          type: String,
+          enum: {
+            values: usersConstants.DEALER_STATUS_VALUES,
+            message: 'Invalid dealer status',
+          },
+        },
+        reason: {type: String, default: null},
+        updatedBy: {
+          type: Schema.Types.ObjectId,
+          ref: 'Users',
+          default: null,
+        },
+        updatedAt: {type: Date, default: Date.now},
+      },
+    ],
     // 🔴 ===== LOCATION (OPTIONAL FOR ALL) =====
     country: {type: String, default: null,},
     state: {type: String, default: null},

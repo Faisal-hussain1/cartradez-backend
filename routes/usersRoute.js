@@ -143,8 +143,6 @@ router.patch(
   catchAsync(UsersController.updateProfile)
 );
 
-router.get("/:id", UsersController.getUserById);
-
 router.patch(
   '/dealer-form/:_id',
   authMiddleware,
@@ -154,5 +152,25 @@ router.patch(
   }),
   catchAsync(UsersController.addDealerInfo)
 );
+
+router.get(
+  '/dealers',
+  authMiddleware,
+  catchAsync(UsersController.getDealers)
+);
+
+router.get(
+  '/dealers/:id',
+  authMiddleware,
+  catchAsync(UsersController.getDealerById)
+);
+
+router.patch(
+  '/dealers/:id/status',
+  authMiddleware,
+  catchAsync(UsersController.updateDealerStatus)
+);
+
+router.get("/:id", UsersController.getUserById);
 
 module.exports = router;
