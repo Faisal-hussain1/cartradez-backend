@@ -15,7 +15,15 @@ module.exports = (data, req, res, next) => {
   // If there is no jwt token and is not login requested
   if (!jwtData && !data.body?.isLoginRequest) return next(data);
 
-  let userObj = jwtData ? jwtData.user : data.body.user;
+  const userObj = jwtData?.user || jwtData || data.body?.user;
+
+  if (!userObj?._id || !userObj?.email) {
+    return next(data);
+  }
+
+  const currentActiveOrganization = userObj.currentActiveOrganization || {
+    role: userObj.systemRole,
+  };
 
   // Prepare the jwt token
   let payload = {
@@ -24,8 +32,9 @@ module.exports = (data, req, res, next) => {
       email: userObj.email,
       firstName: userObj.firstName,
       lastName: userObj.lastName,
-      currentActiveOrganization: userObj.currentActiveOrganization,
-      ...(userObj.currentActiveOrganization.role === SYSTEM_ROLES.admin.value &&
+      systemRole: userObj.systemRole || currentActiveOrganization?.role,
+      currentActiveOrganization,
+      ...(currentActiveOrganization?.role === SYSTEM_ROLES.admin.value &&
         {}),
     },
   };

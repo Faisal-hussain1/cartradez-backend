@@ -9,7 +9,14 @@ module.exports = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req, res) => {
-    return req.method === 'OPTIONS' || req.url === '/favicon.ico';
+    const url = req.originalUrl || req.url || '';
+    const isUsersMeRequest = req.method === 'GET' && url.includes('/users/me');
+
+    return (
+      req.method === 'OPTIONS' ||
+      req.url === '/favicon.ico' ||
+      isUsersMeRequest
+    );
   },
   handler: (req, res, next, options) => {
     next(GeneralErrorsFactory.tooManyRequestsErr());
