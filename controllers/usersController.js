@@ -501,13 +501,37 @@ module.exports = class UsersController {
       'showroomAddress',
       'showroomName',
       'socialMedia',
-    ];
+      ];
+
+    const existingUser = await UsersModel.findById(_id).select(
+      'requestLimit dealerStatus'
+    );
+
+    if (!existingUser) {
+      return res.status(404).json({
+        statusCode: 404,
+        message: 'User not found',
+        success: false,
+      });
+    }
+
+    const usedAttempts = Number(existingUser.requestLimit || 0);
+    const maxAttempts = 3;
+
+    if (usedAttempts >= maxAttempts) {
+      return res.status(400).json({
+        statusCode: 400,
+        success: false,
+        message:
+          'Dealer request limit reached (3/3). You cannot submit the dealer form again.',
+      });
+    }
 
     const updateData = Object.fromEntries(
       Object.entries(req.body).filter(([key]) => allowedFields.includes(key))
     );
     updateData.systemRole = 'dealer';
-    updateData.requestLimit = 3;
+    updateData.requestLimit = usedAttempts + 1;
     updateData.dealerStatus = usersConstants.DEALER_STATUS.pending.value;
     updateData.approved = false;
     updateData.rejected = false;
@@ -528,7 +552,7 @@ module.exports = class UsersController {
     if (updatedUser)
       return res.json({
         statusCode: 201,
-        message: 'Dealer Request Submitted. Please wait for admin approval',
+        message: `Dealer Request Submitted. Please wait for admin approval. Attempts used: ${updateData.requestLimit}/3`,
         success: true,
         updatedUser,
       });
@@ -644,7 +668,6 @@ module.exports = class UsersController {
       setData.ntnNo = null;
       setData.socialMedia = null;
       setData.creditsLeft = 0;
-      setData.requestLimit = 0;
     }
 
     const updatedDealer = await UsersModel.findByIdAndUpdate(
@@ -724,7 +747,6 @@ module.exports = class UsersController {
     });
 
     if (!user) throw UsersErrorsFactory.userNotFoundErr();
-
     next(
       UsersResponsesFactory.singleUserInfoRetrievedRes({
         user,
