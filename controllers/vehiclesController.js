@@ -48,6 +48,7 @@ module.exports = class VehiclesController {
 
       createdVehicle.images = vehicleImages;
       createdVehicle.coverImage = {key: vehicleImages[0].key, url: vehicleImages[0].url};
+      if(loggedInUser?.role==="admin") createdVehicle.isManagedByCartradez=true;
       await createdVehicle.save({session});
       await session.commitTransaction();
       session.endSession();
@@ -69,6 +70,39 @@ module.exports = class VehiclesController {
     const skip = (page - 1) * limit;
     const search = req.query.search?.trim();
     const query = {};
+    const activeOnly = req.query.activeOnly === 'true';
+    const creatorId = req.query.creatorId?.trim();
+    const listingType = req.query.listingType?.trim();
+    const startDate = req.query.startDate?.trim();
+    const endDate = req.query.endDate?.trim();
+
+    if (activeOnly) {
+      query.listingType = {$ne: null};
+    }
+
+    if (creatorId) {
+      query.creatorId = creatorId;
+    }
+
+    if (listingType) {
+      query.listingType = listingType;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        const startDateObj = new Date(startDate);
+        if (!Number.isNaN(startDateObj.getTime())) query.createdAt.$gte = startDateObj;
+      }
+      if (endDate) {
+        const endDateObj = new Date(endDate);
+        if (!Number.isNaN(endDateObj.getTime())) {
+          endDateObj.setHours(23, 59, 59, 999);
+          query.createdAt.$lte = endDateObj;
+        }
+      }
+      if (Object.keys(query.createdAt).length === 0) delete query.createdAt;
+    }
 
     if (search) {
       const keywords = search.split(/\s+/);
@@ -85,7 +119,7 @@ module.exports = class VehiclesController {
             queryProperties: {skip, limit, sort: {createdAt: -1}},
             fieldsInclusion: {
               includeSpecificFields: [
-                '_id make model year price currency coverImage listingType creatorId isManagedByCartradez',
+                '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
               ],
             },
           },
@@ -406,7 +440,11 @@ module.exports = class VehiclesController {
       return res.json({statusCode: 401, message: 'Something went wrong while authenticating user. Please login again.'});
 
     try {
-      const query = {listingType: {$ne: null}, creatorId: loggedInUser._id};
+      const userRole = loggedInUser?.systemRole || loggedInUser?.role;
+      const isAdminRole = userRole === SYSTEM_ROLES.admin.value;
+      const query = isAdminRole
+        ? {listingType: {$ne: null}}
+        : {listingType: {$ne: null}, creatorId: loggedInUser._id};
       const {count, error: countErr} = await GeneralServices.countDocuments({
         model: VehiclesModel,
         query,
