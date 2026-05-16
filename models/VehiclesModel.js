@@ -178,5 +178,6 @@ vehiclesSchema.index({creatorId: 1, createdAt: -1});
 vehiclesSchema.index({isManagedByCartradez: 1, createdAt: -1});
 vehiclesSchema.index({listingType: 1, createdAt: -1});
 vehiclesSchema.index({status: 1, createdAt: -1});
+vehiclesSchema.index({createdAt: -1});
 
 module.exports = mongoose.model('Vehicles', vehiclesSchema);

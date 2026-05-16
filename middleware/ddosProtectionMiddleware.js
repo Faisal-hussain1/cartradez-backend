@@ -11,11 +11,15 @@ module.exports = rateLimit({
   skip: (req, res) => {
     const url = req.originalUrl || req.url || '';
     const isUsersMeRequest = req.method === 'GET' && url.includes('/users/me');
+    const isDevOrTest = process.env.NODE_ENV !== 'production';
+    const isVehiclesListingRequest = req.method === 'GET' && url.includes('/api/v1/vehicles');
+    const shouldBypassForLoadTesting = isDevOrTest && isVehiclesListingRequest;
 
     return (
       req.method === 'OPTIONS' ||
       req.url === '/favicon.ico' ||
-      isUsersMeRequest
+      isUsersMeRequest ||
+      shouldBypassForLoadTesting
     );
   },
   handler: (req, res, next, options) => {

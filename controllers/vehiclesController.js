@@ -65,10 +65,12 @@ module.exports = class VehiclesController {
   }
 
   static async getAllVehicles(req, res, next) {
-    const limit = parseInt(req.query.limit) || generalConstant.paginationDefaults.limit;
+    const requestedLimit = parseInt(req.query.limit, 10) || generalConstant.paginationDefaults.limit;
+    const limit = Math.min(requestedLimit, 50);
     const page = parseInt(req.query.page) || generalConstant.paginationDefaults.page;
     const skip = (page - 1) * limit;
     const search = req.query.search?.trim();
+    const includeCount = req.query.includeCount !== 'false';
     const query = {};
     const activeOnly = req.query.activeOnly === 'true';
     const creatorId = req.query.creatorId?.trim();
@@ -110,29 +112,45 @@ module.exports = class VehiclesController {
     }
 
     try {
-      const [countResult, docsResult] = await Promise.all([
-        GeneralServices.countDocuments({model: VehiclesModel, query}),
-        GeneralServices.find({
-          model: VehiclesModel,
-          query,
-          options: {
-            queryProperties: {skip, limit, sort: {createdAt: -1}},
-            fieldsInclusion: {
-              includeSpecificFields: [
-                '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
-              ],
-            },
-          },
-        }),
-      ]);
+      const vehicleListQuery = VehiclesModel.find(
+        query,
+        '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
+      )
+        .sort({createdAt: -1})
+        .skip(skip)
+        .limit(limit)
+        .lean();
 
-      const {count, error: countError} = countResult;
-      if (countError) throw countError;
+      if (includeCount) {
+        const [countResult, docs] = await Promise.all([
+          GeneralServices.countDocuments({model: VehiclesModel, query}),
+          vehicleListQuery,
+        ]);
 
-      const {docs, error} = docsResult;
-      if (error) throw error;
+        const {count, error: countError} = countResult;
+        if (countError) throw countError;
 
-      return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({vehicles: docs, count, page, limit, totalPages: Math.ceil(count / limit)}));
+        return next(
+          VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
+            vehicles: docs,
+            count,
+            page,
+            limit,
+            totalPages: Math.ceil(count / limit),
+          })
+        );
+      }
+
+      const docs = await vehicleListQuery;
+      return next(
+        VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
+          vehicles: docs,
+          count: docs.length,
+          page,
+          limit,
+          totalPages: 1,
+        })
+      );
     } catch (err) {
       return next(err);
     }
