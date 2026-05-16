@@ -60,11 +60,17 @@ const API_PREFIX = __ENV.API_PREFIX || '/api/v1';
 const AUTH_TOKEN = __ENV.AUTH_TOKEN || '';
 const VEHICLE_ID = __ENV.VEHICLE_ID || '';
 const ENABLE_ADD_VEHICLE = __ENV.ENABLE_ADD_VEHICLE === 'true';
+const RATE_LIMIT_BYPASS_KEY = __ENV.RATE_LIMIT_BYPASS_KEY || '';
 
 const authHeaders = AUTH_TOKEN
   ? {
       Authorization: `Bearer ${AUTH_TOKEN}`,
+      ...(RATE_LIMIT_BYPASS_KEY ? { 'x-load-test-key': RATE_LIMIT_BYPASS_KEY } : {}),
     }
+  : {};
+
+const commonHeaders = RATE_LIMIT_BYPASS_KEY
+  ? { 'x-load-test-key': RATE_LIMIT_BYPASS_KEY }
   : {};
 
 const oneByOnePng = encoding.b64decode(
@@ -75,7 +81,10 @@ const oneByOnePng = encoding.b64decode(
 export function getVehicles() {
   const res = http.get(
     `${BASE_URL}${API_PREFIX}/vehicles?includeCount=false&limit=20`,
-    { tags: { endpoint: 'get_vehicles' } },
+    {
+      headers: commonHeaders,
+      tags: { endpoint: 'get_vehicles' },
+    },
   );
   check(res, {
     'get vehicles status acceptable': (r) => STRICT_MODE ? r.status === 200 : [200, 429].includes(r.status),
@@ -90,7 +99,10 @@ export function vehicleDetail() {
   }
   const res = http.get(
     `${BASE_URL}${API_PREFIX}/vehicles/${VEHICLE_ID}`,
-    { tags: { endpoint: 'vehicle_detail' } },
+    {
+      headers: commonHeaders,
+      tags: { endpoint: 'vehicle_detail' },
+    },
   );
   check(res, {
     'vehicle detail status acceptable': (r) => STRICT_MODE ? r.status === 200 : [200, 404, 429].includes(r.status),

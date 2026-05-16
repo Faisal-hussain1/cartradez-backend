@@ -13,6 +13,7 @@
   "awakeJobFrequencyInMinutes": "10",
   "windowSizeInMinutes": 1,
   "maxRequestsAllowed": 30,
+  "vehicleReadMaxRequestsAllowed": 300,
   "socket": "socketIo",
 "frontendURL": "http://localhost:3000",
   "allowedOrigins": "",

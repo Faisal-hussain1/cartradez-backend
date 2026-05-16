@@ -16,6 +16,7 @@ export const options = {
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const API_PREFIX = __ENV.API_PREFIX || '/api/v1';
 const AUTH_TOKEN = __ENV.AUTH_TOKEN || '';
+const RATE_LIMIT_BYPASS_KEY = __ENV.RATE_LIMIT_BYPASS_KEY || '';
 
 const oneByOnePng = encoding.b64decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO5+yJkAAAAASUVORK5CYII=',
@@ -90,6 +91,7 @@ export default function () {
     headers: {
       Authorization: `Bearer ${AUTH_TOKEN}`,
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      ...(RATE_LIMIT_BYPASS_KEY ? { 'x-load-test-key': RATE_LIMIT_BYPASS_KEY } : {}),
     },
   });
 

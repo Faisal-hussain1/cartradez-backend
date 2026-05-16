@@ -6,6 +6,7 @@ const {
   fileUploadMiddleware,
   authMiddleware,
   accessMiddleware,
+  vehicleReadLimiter,
 } = require('../middleware');
 const {vehiclesSchema} = require('../schemas');
 const {catchAsync} = require('../utils');
@@ -56,10 +57,10 @@ router.get(
 );
 
 // ─── ROOT LIST ───────────────────────────────────────────────────────────────
-router.get('/', catchAsync(VehiclesController.getAllVehicles));
+router.get('/', vehicleReadLimiter, catchAsync(VehiclesController.getAllVehicles));
 
 // ─── WILDCARD /:id ROUTES LAST ───────────────────────────────────────────────
-router.get('/:id', catchAsync(VehiclesController.getVehicle));
+router.get('/:id', vehicleReadLimiter, catchAsync(VehiclesController.getVehicle));
 
 router.patch(
   '/:id',

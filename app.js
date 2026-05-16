@@ -12,7 +12,7 @@ const {
   refreshTokenMiddleware,
   finalResponseMiddleware,
   errorMiddleware,
-  ddosProtectionMiddleware,
+  globalLimiter,
 } = require('./middleware');
 const {corsOrigins} = require('./utils');
 
@@ -39,7 +39,7 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cors({origin: true, credentials: true}));
 
-app.use(ddosProtectionMiddleware);
+app.use(globalLimiter);
 v1.prepareV1Routes({app});
 
 app.get('/awake', (req, res) => {

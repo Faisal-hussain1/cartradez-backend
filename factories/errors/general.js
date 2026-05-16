@@ -57,7 +57,7 @@ module.exports = class GeneralErrorsFactory {
     return new AppError({
       message: 'Too many requests. You are temporarily blocked.',
       error: {type: GENERAL_ERROR_TYPES.temporarilyBlocked.value},
-      statusCode: 500,
+      statusCode: 429,
     });
   }
 

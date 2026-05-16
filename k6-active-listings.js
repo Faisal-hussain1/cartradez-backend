@@ -15,6 +15,7 @@ export const options = {
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const API_PREFIX = __ENV.API_PREFIX || '/api/v1';
 const AUTH_TOKEN = __ENV.AUTH_TOKEN || '';
+const RATE_LIMIT_BYPASS_KEY = __ENV.RATE_LIMIT_BYPASS_KEY || '';
 
 export default function () {
   if (!AUTH_TOKEN) {
@@ -23,7 +24,10 @@ export default function () {
   }
 
   const res = http.get(`${BASE_URL}${API_PREFIX}/vehicles/stats/active-listings-count`, {
-    headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+    headers: {
+      Authorization: `Bearer ${AUTH_TOKEN}`,
+      ...(RATE_LIMIT_BYPASS_KEY ? { 'x-load-test-key': RATE_LIMIT_BYPASS_KEY } : {}),
+    },
   });
   check(res, {
     'active listings status acceptable': (r) =>

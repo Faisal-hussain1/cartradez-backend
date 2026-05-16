@@ -3,7 +3,7 @@ const validatorMiddleware = require(`./validatorMiddleware`);
 const errorMiddleware = require(`./errorMiddleware`);
 const accessMiddleware = require('./accessMiddleware');
 const aclAccessMiddleware = require('./aclAccessMiddleware');
-const ddosProtectionMiddleware = require('./ddosProtectionMiddleware');
+const {globalLimiter, vehicleReadLimiter} = require('./ddosProtectionMiddleware');
 const fileUploadMiddleware = require('./fileUploadMiddleware');
 const finalResponseMiddleware = require('./finalResponseMiddleware');
 const loggerMiddleware = require('./loggerMiddleware');
@@ -20,7 +20,8 @@ module.exports = {
   logger: loggerMiddleware, // logger.error() sounds more appropriate than loggerMiddleware.error() IMO.
   accessMiddleware,
   preparedObjectMiddleware,
-  ddosProtectionMiddleware,
+  globalLimiter,
+  vehicleReadLimiter,
   fileUploadMiddleware,
   socketJWTMiddleware,
   aclAccessMiddleware,
