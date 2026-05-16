@@ -71,6 +71,7 @@ module.exports = class VehiclesController {
     const skip = (page - 1) * limit;
     const search = req.query.search?.trim();
     const includeCount = req.query.includeCount !== 'false';
+    const prioritizeListingType = req.query.prioritizeListingType === 'true';
     const query = {};
     const activeOnly = req.query.activeOnly === 'true';
     const creatorId = req.query.creatorId?.trim();
@@ -112,14 +113,50 @@ module.exports = class VehiclesController {
     }
 
     try {
-      const vehicleListQuery = VehiclesModel.find(
-        query,
-        '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
-      )
-        .sort({createdAt: -1})
-        .skip(skip)
-        .limit(limit)
-        .lean();
+      const projectionFields = {
+        _id: 1,
+        make: 1,
+        model: 1,
+        year: 1,
+        price: 1,
+        currency: 1,
+        coverImage: 1,
+        listingType: 1,
+        creatorId: 1,
+        isManagedByCartradez: 1,
+        createdAt: 1,
+      };
+
+      const vehicleListQuery = prioritizeListingType
+        ? VehiclesModel.aggregate([
+            {$match: query},
+            {
+              $addFields: {
+                listingPriority: {
+                  $switch: {
+                    branches: [
+                      {case: {$eq: ['$listingType', 'premium']}, then: 1},
+                      {case: {$eq: ['$listingType', 'quick sell']}, then: 2},
+                      {case: {$eq: ['$listingType', 'standard']}, then: 3},
+                    ],
+                    default: 4,
+                  },
+                },
+              },
+            },
+            {$sort: {listingPriority: 1, createdAt: -1}},
+            {$skip: skip},
+            {$limit: limit},
+            {$project: projectionFields},
+          ])
+        : VehiclesModel.find(
+            query,
+            '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
+          )
+            .sort({createdAt: -1})
+            .skip(skip)
+            .limit(limit)
+            .lean();
 
       if (includeCount) {
         const [countResult, docs] = await Promise.all([
