@@ -7,6 +7,8 @@ const {getCurrentTimestamp} = require('../utils/dateUtils');
 const {VEHICLE_ACTIONS, VEHICLE_STATUSES} = require('../constants/vehicleConstants');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
+const resolveUserRole = (user = {}) => user?.systemRole || user?.role;
+
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
     const data = req.body;
@@ -14,7 +16,7 @@ module.exports = class VehiclesController {
     if (!loggedInUser)
       return res.json({statusCode: 401, message: 'Something went wrong while authenticating user. Please login again.'});
 
-    const isAdminRole = loggedInUser.role === SYSTEM_ROLES.admin.value;
+    const isAdminRole = resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value;
     if (isAdminRole) data.isManagedByCartradez = true;
 
     let session, awsFileKeys = [], createdVehicleId, vehicleImages = [];
@@ -48,7 +50,7 @@ module.exports = class VehiclesController {
 
       createdVehicle.images = vehicleImages;
       createdVehicle.coverImage = {key: vehicleImages[0].key, url: vehicleImages[0].url};
-      if(loggedInUser?.role==="admin") createdVehicle.isManagedByCartradez=true;
+      if (resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value) createdVehicle.isManagedByCartradez = true;
       await createdVehicle.save({session});
       await session.commitTransaction();
       session.endSession();
@@ -327,9 +329,9 @@ module.exports = class VehiclesController {
     if (findErr) throw findErr;
     if (!existingVehicle) return next(VehiclesErrorsFactory.vehicleNotFoundErr());
 
-    // const isAdmin = loggedInUser.role === SYSTEM_ROLES.admin.value;
+    const isAdmin = resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value;
     const isOwner = existingVehicle.creatorId?.toString() === loggedInUser._id?.toString();
-    if (!isOwner)
+    if (!isAdmin && !isOwner)
       return res.status(403).json({success: false, message: 'You are not authorized to update this vehicle.'});
 
     const allowedFields = [
@@ -452,9 +454,9 @@ module.exports = class VehiclesController {
     if (findErr) throw findErr;
     if (!existingVehicle) return next(VehiclesErrorsFactory.vehicleNotFoundErr());
 
-    // const isAdmin = loggedInUser.role === SYSTEM_ROLES.admin.value;
+    const isAdmin = resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value;
     const isOwner = existingVehicle.creatorId?.toString() === loggedInUser._id?.toString();
-    if (!isOwner)
+    if (!isAdmin && !isOwner)
       return res.status(403).json({success: false, message: 'You are not authorized to delete this vehicle.'});
 
     let session;

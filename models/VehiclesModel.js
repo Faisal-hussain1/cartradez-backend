@@ -56,7 +56,7 @@ const vehiclesSchema = new Schema(
     registrationCity: {type: String, default:null},
     registrationYear: {type: String, default:null},
     registrationNumber: {type: String, default:null},
-    numberOfOwners: {type: String, default:null},
+    numberOfOwners: {type: String, default:"Freshly Imported"},
     features: [{type: String}],
     description: {type: String, default:null},
     images: [
