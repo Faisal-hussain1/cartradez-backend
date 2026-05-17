@@ -25,30 +25,26 @@
 
 
 const sendEmail = require('../send');
+const emailTemplate = require('../template');
 
 module.exports = async ({user, resetUrl}) => {
   const {email, firstName, lastName} = user;
 
   const name = `${firstName} ${lastName}`;
 
-  const html = `
-    <h2>Password Reset - CarTradez</h2>
-
-    <p>Hello ${name},</p>
-
-    <p>You requested to reset your password.</p>
-
-    <p>Click below to set a new password:</p>
-
-    <a href="${resetUrl}"
-       style="padding:10px 20px;background:#2563eb;color:white;text-decoration:none;">
-       Reset Password
-    </a>
-
-    <p>If you didn't request this, please ignore this email.</p>
-
-    <p>Thanks,<br/>CarTradez Team</p>
+  const bodyContent = `
+    <p style="margin: 0 0 12px 0;">Hello ${name},</p>
+    <p style="margin: 0 0 12px 0;">We received a request to reset your CarTradez account password.</p>
+    <p style="margin: 0 0 12px 0;">Use the button below to choose a new password.</p>
+    <p style="margin: 0;">If you did not request this, you can safely ignore this email.</p>
   `;
+
+  const html = emailTemplate({
+    title: 'Password Reset Request',
+    bodyContent,
+    ctaText: 'Reset Password',
+    ctaUrl: resetUrl,
+  });
 
   await sendEmail({
     to: email,
