@@ -76,6 +76,9 @@ module.exports = class VehiclesController {
     const activeOnly = req.query.activeOnly === 'true';
     const creatorId = req.query.creatorId?.trim();
     const listingType = req.query.listingType?.trim();
+    const year = req.query.year?.trim();
+    const minPrice = req.query.minPrice?.trim();
+    const maxPrice = req.query.maxPrice?.trim();
     const startDate = req.query.startDate?.trim();
     const endDate = req.query.endDate?.trim();
 
@@ -89,6 +92,24 @@ module.exports = class VehiclesController {
 
     if (listingType) {
       query.listingType = listingType;
+    }
+
+    if (year) {
+      const parsedYear = Number(year);
+      if (!Number.isNaN(parsedYear)) query.year = parsedYear;
+    }
+
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) {
+        const parsedMinPrice = Number(minPrice);
+        if (!Number.isNaN(parsedMinPrice)) query.price.$gte = parsedMinPrice;
+      }
+      if (maxPrice) {
+        const parsedMaxPrice = Number(maxPrice);
+        if (!Number.isNaN(parsedMaxPrice)) query.price.$lte = parsedMaxPrice;
+      }
+      if (Object.keys(query.price).length === 0) delete query.price;
     }
 
     if (startDate || endDate) {
@@ -108,8 +129,25 @@ module.exports = class VehiclesController {
     }
 
     if (search) {
-      const keywords = search.split(/\s+/);
-      query.$and = keywords.map((word) => ({$or: [{make: {$regex: word, $options: 'i'}}, {model: {$regex: word, $options: 'i'}}, {variant: {$regex: word, $options: 'i'}}]}));
+      const keywords = search.split(/\s+/).filter(Boolean);
+      query.$and = keywords.map((word) => {
+        const parsedNumber = Number(word);
+        const isNumeric = !Number.isNaN(parsedNumber);
+
+        const orConditions = [
+          {make: {$regex: word, $options: 'i'}},
+          {model: {$regex: word, $options: 'i'}},
+          {variant: {$regex: word, $options: 'i'}},
+          {listingType: {$regex: word, $options: 'i'}},
+        ];
+
+        if (isNumeric) {
+          orConditions.push({year: parsedNumber});
+          orConditions.push({price: parsedNumber});
+        }
+
+        return {$or: orConditions};
+      });
     }
 
     try {

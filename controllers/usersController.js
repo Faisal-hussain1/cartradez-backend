@@ -139,6 +139,8 @@ module.exports = class UsersController {
           expiry: process.env.JWT_REFRESH_EXPIRY || '30d',
         });
 
+        console.log(refreshToken)
+
         return res.status(200).json({
           success: true,
           message: 'Login successful',
@@ -156,6 +158,8 @@ module.exports = class UsersController {
         payload: {email},
         expiry: '15m', // Short lived token for completing signup
       });
+
+
 
       res.status(200).json({
         success: true,
