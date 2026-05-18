@@ -497,8 +497,7 @@ module.exports = class UsersController {
     const allowedFields = [
       'carTypes',
       'experience',
-      'nrcNo',
-      'ntnNo',
+      'tpin',
       'showroomAddress',
       'showroomName',
       'socialMedia',
@@ -662,11 +661,10 @@ module.exports = class UsersController {
       setData.rejected = true;
       setData.rejectReason = String(rejectReason).trim();
       setData.showroomName = null;
-      setData.nrcNo = null;
+      setData.tpin = null;
       setData.experience = 0;
       setData.carTypes = null;
       setData.showroomAddress = null;
-      setData.ntnNo = null;
       setData.socialMedia = null;
       setData.creditsLeft = 0;
     }

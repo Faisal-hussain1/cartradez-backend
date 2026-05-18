@@ -81,7 +81,7 @@ const usersSchema = new Schema(
       },
       default: usersConstants.DEALER_STATUS.pending.value,
     },
-    nrcNo:{
+    tpin:{
       type:String,
       default:null
     },
@@ -97,10 +97,6 @@ const usersSchema = new Schema(
     showroomAddress:{
       type:String,
       default:null,
-    },
-    ntnNo:{
-      type:String,
-      default:null
     },
     socialMedia:{
       type:String,
