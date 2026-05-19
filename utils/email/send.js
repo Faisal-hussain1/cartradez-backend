@@ -20,9 +20,6 @@ module.exports = async ({to, subject, html}) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-
-    console.log('✅ EMAIL SENT:', info.messageId);
-
     return {success: true};
   } catch (error) {
     console.log('❌ EMAIL ERROR:', error.message);
