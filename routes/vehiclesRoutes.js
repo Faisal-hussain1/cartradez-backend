@@ -46,6 +46,18 @@ router.get(
 );
 
 router.get(
+  '/stats/managed-by-cartradez-count',
+  authMiddleware,
+  catchAsync(VehiclesController.getManagedByCartradezCount)
+);
+
+router.get(
+  '/stats/dashboard-vehicle-stats',
+  authMiddleware,
+  catchAsync(VehiclesController.getDashboardVehicleStats)
+);
+
+router.get(
   '/cartradez',
   catchAsync(VehiclesController.getAllManagedByCartradezVehicles)
 );

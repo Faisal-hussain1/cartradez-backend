@@ -8,6 +8,11 @@ const {VEHICLE_ACTIONS, VEHICLE_STATUSES} = require('../constants/vehicleConstan
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
 
 const resolveUserRole = (user = {}) => user?.systemRole || user?.role;
+const DASHBOARD_STATS_CACHE_TTL_MS = 60 * 1000;
+let dashboardVehicleStatsCache = {
+  expiresAt: 0,
+  data: null,
+};
 
 module.exports = class VehiclesController {
   static async addNewVehicle(req, res, next) {
@@ -83,9 +88,11 @@ module.exports = class VehiclesController {
     const maxPrice = req.query.maxPrice?.trim();
     const startDate = req.query.startDate?.trim();
     const endDate = req.query.endDate?.trim();
+    const isManagedByCartradezParam = req.query.isManagedByCartradez?.trim();
 
     if (activeOnly) {
       query.listingType = {$ne: null};
+      query.isManagedByCartradez = false;
     }
 
     if (creatorId) {
@@ -94,6 +101,11 @@ module.exports = class VehiclesController {
 
     if (listingType) {
       query.listingType = listingType;
+    }
+    if (isManagedByCartradezParam === 'true') {
+      query.isManagedByCartradez = true;
+    } else if (isManagedByCartradezParam === 'false') {
+      query.isManagedByCartradez = false;
     }
 
     if (year) {
@@ -555,6 +567,104 @@ module.exports = class VehiclesController {
           count,
         },
       });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async getManagedByCartradezCount(req, res, next) {
+    const loggedInUser = req.jwtToken;
+
+    if (!loggedInUser)
+      return res.json({statusCode: 401, message: 'Something went wrong while authenticating user. Please login again.'});
+
+    try {
+      const userRole = loggedInUser?.systemRole || loggedInUser?.role;
+      const isAdminRole = userRole === SYSTEM_ROLES.admin.value;
+      if (!isAdminRole) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to access this resource.',
+        });
+      }
+
+      const {count, error: countErr} = await GeneralServices.countDocuments({
+        model: VehiclesModel,
+        query: {isManagedByCartradez: true},
+      });
+
+      if (countErr) throw countErr;
+
+      return res.json({
+        statusCode: 200,
+        success: true,
+        message: 'Managed by Cartradez count retrieved successfully',
+        body: {
+          count,
+        },
+      });
+    } catch (err) {
+      return next(err);
+    }
+  }
+
+  static async getDashboardVehicleStats(req, res, next) {
+    const loggedInUser = req.jwtToken;
+
+    if (!loggedInUser)
+      return res.json({statusCode: 401, message: 'Something went wrong while authenticating user. Please login again.'});
+
+    try {
+      const userRole = loggedInUser?.systemRole || loggedInUser?.role;
+      const isAdminRole = userRole === SYSTEM_ROLES.admin.value;
+      if (!isAdminRole) {
+        return res.status(403).json({
+          success: false,
+          message: 'You are not authorized to access this resource.',
+        });
+      }
+
+      const now = Date.now();
+      if (
+        dashboardVehicleStatsCache.data &&
+        dashboardVehicleStatsCache.expiresAt > now
+      ) {
+        return res.json(dashboardVehicleStatsCache.data);
+      }
+
+      const [activeCountResult, managedCountResult] = await Promise.all([
+        GeneralServices.countDocuments({
+          model: VehiclesModel,
+          query: {listingType: {$ne: null}},
+        }),
+        GeneralServices.countDocuments({
+          model: VehiclesModel,
+          query: {isManagedByCartradez: true},
+        }),
+      ]);
+
+      const {count: activeListingsCount, error: activeCountErr} = activeCountResult;
+      if (activeCountErr) throw activeCountErr;
+
+      const {count: managedByCartradezCount, error: managedCountErr} = managedCountResult;
+      if (managedCountErr) throw managedCountErr;
+
+      const response = {
+        statusCode: 200,
+        success: true,
+        message: 'Dashboard vehicle stats retrieved successfully',
+        body: {
+          activeListingsCount,
+          managedByCartradezCount,
+        },
+      };
+
+      dashboardVehicleStatsCache = {
+        data: response,
+        expiresAt: now + DASHBOARD_STATS_CACHE_TTL_MS,
+      };
+
+      return res.json(response);
     } catch (err) {
       return next(err);
     }
