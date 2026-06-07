@@ -165,6 +165,7 @@ const usersSchema = new Schema(
 
     // 🔴 ===== ADMIN CONTROL =====
     isBlocked: {type: Boolean, default: false},
+    blockReason: {type: String, default: null, maxlength: 500},
     blockedAt: {type: Date, default: null},
     blockedBy: {
       type: Schema.Types.ObjectId,
@@ -209,6 +210,8 @@ usersSchema.plugin(hideTimestampsPlugin);
 usersSchema.plugin(softDeleteWithIndexesPlugin, {
   uniqueFields: ['email'],
 });
+
+usersSchema.index({systemRole: 1, isBlocked: 1, updatedAt: -1});
 
 // virtual
 usersSchema.virtual('currentActiveOrganization').get(function () {

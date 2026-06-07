@@ -154,6 +154,18 @@ router.patch(
 );
 
 router.get(
+  '/activity',
+  authMiddleware,
+  catchAsync(UsersController.getUserActivity)
+);
+
+router.patch(
+  '/activity/:id',
+  authMiddleware,
+  catchAsync(UsersController.updateUserActivityStatus)
+);
+
+router.get(
   '/dealers',
   authMiddleware,
   catchAsync(UsersController.getDealers)

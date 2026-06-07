@@ -1,6 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const Vehicles = require("../models/VehiclesModel");
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -47,10 +48,14 @@ const generateSignature = (data, passphrase = "") => {
   return crypto.createHash("md5").update(getString).digest("hex");
 };
 
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   const { userId, vehicleId, currency, image, make, model, listingType, price } = req.body;
 
   try {
+    if (String(req.jwtToken?._id) !== String(userId)) {
+      return res.status(403).json({error: 'Unauthorized payment request'});
+    }
+
     const paymentData = {
       merchant_id: process.env.PAYFAST_MERCHANT_ID,
       merchant_key: process.env.PAYFAST_MERCHANT_KEY,

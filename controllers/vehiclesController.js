@@ -3,15 +3,98 @@ const {generalConstant} = require('../constants');
 const {VehiclesResponsesFactory, VehiclesErrorsFactory} = require('../factories');
 const {FileServices, GeneralServices} = require('../services');
 const VehiclesModel = require('../models/VehiclesModel');
+const VehicleListingQuotaModel = require('../models/VehicleListingQuotaModel');
 const {getCurrentTimestamp} = require('../utils/dateUtils');
 const {VEHICLE_ACTIONS, VEHICLE_STATUSES} = require('../constants/vehicleConstants');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
+const AppError = require('../factories/errors/AppError');
 
 const resolveUserRole = (user = {}) => user?.systemRole || user?.role;
+const MONTHLY_LISTING_LIMITS = {
+  [SYSTEM_ROLES.user.value]: {
+    premium: 1,
+    'quick sell': 1,
+    standard: 1,
+  },
+  [SYSTEM_ROLES.dealer.value]: {
+    premium: 2,
+    'quick sell': 3,
+    standard: 5,
+  },
+};
 const DASHBOARD_STATS_CACHE_TTL_MS = 60 * 1000;
 let dashboardVehicleStatsCache = {
   expiresAt: 0,
   data: null,
+};
+
+const getMonthlyPeriod = (date = new Date()) =>
+  `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+
+const getMonthlyDateRange = (date = new Date()) => ({
+  start: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)),
+  end: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)),
+});
+
+const reserveMonthlyListingQuota = async ({creatorId, listingType, role}) => {
+  const limit = MONTHLY_LISTING_LIMITS[role]?.[listingType];
+  if (!limit) {
+    throw new AppError({
+      message: 'Please select a valid listing type.',
+      statusCode: 400,
+    });
+  }
+
+  const now = new Date();
+  const period = getMonthlyPeriod(now);
+  const quotaQuery = {creatorId, listingType, period};
+  const {start, end} = getMonthlyDateRange(now);
+
+  await VehicleListingQuotaModel.init();
+
+  const existingVehicleCount = await VehiclesModel.countDocuments({
+    creatorId,
+    listingType,
+    createdAt: {$gte: start, $lt: end},
+  });
+
+  try {
+    await VehicleListingQuotaModel.updateOne(
+      quotaQuery,
+      {$setOnInsert: {...quotaQuery, used: existingVehicleCount}},
+      {upsert: true}
+    );
+  } catch (error) {
+    if (error?.code !== 11000) throw error;
+  }
+
+  await VehicleListingQuotaModel.updateOne(
+    quotaQuery,
+    {$max: {used: existingVehicleCount}}
+  );
+
+  const reservation = await VehicleListingQuotaModel.findOneAndUpdate(
+    {...quotaQuery, used: {$lt: limit}},
+    {$inc: {used: 1}},
+    {new: true}
+  );
+
+  if (!reservation) {
+    throw new AppError({
+      message: `Monthly limit reached for ${listingType}. You can upload ${limit} vehicle${limit === 1 ? '' : 's'} per month.`,
+      statusCode: 409,
+    });
+  }
+
+  return quotaQuery;
+};
+
+const releaseMonthlyListingQuota = async (quotaQuery) => {
+  if (!quotaQuery) return;
+  await VehicleListingQuotaModel.updateOne(
+    {...quotaQuery, used: {$gt: 0}},
+    {$inc: {used: -1}}
+  );
 };
 
 module.exports = class VehiclesController {
@@ -24,7 +107,7 @@ module.exports = class VehiclesController {
     const isAdminRole = resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value;
     if (isAdminRole) data.isManagedByCartradez = true;
 
-    let session, awsFileKeys = [], createdVehicleId, vehicleImages = [];
+    let session, awsFileKeys = [], createdVehicleId, vehicleImages = [], quotaReservation;
 
     if (req?.files && req.files.length < 3) return next(VehiclesErrorsFactory.vehicleLessImagesErr());
     if (req?.files && req.files.length > 9) return next(VehiclesErrorsFactory.vehicleMoreImagesErr());
@@ -33,6 +116,14 @@ module.exports = class VehiclesController {
       data.creatorId = loggedInUser?._id;
       data.events = [{action: VEHICLE_ACTIONS.created.value, userId: loggedInUser?._id, timestamp: getCurrentTimestamp()}];
       data.features = data.features || [];
+
+      if (!isAdminRole) {
+        quotaReservation = await reserveMonthlyListingQuota({
+          creatorId: loggedInUser._id,
+          listingType: String(data.listingType || '').toLowerCase().trim(),
+          role: resolveUserRole(loggedInUser),
+        });
+      }
 
       session = await mongoose.startSession();
       session.startTransaction();
@@ -59,6 +150,8 @@ module.exports = class VehiclesController {
       await createdVehicle.save({session});
       await session.commitTransaction();
       session.endSession();
+      session = null;
+      quotaReservation = null;
 
       return res.json({statusCode: 201, message: 'Vehicle added successfully', success: true});
     } catch (error) {
@@ -67,6 +160,7 @@ module.exports = class VehiclesController {
         await Promise.all(awsFileKeys.map(key => FileServices.deleteFile({key})));
       }
       if (session) { await session.abortTransaction(); session.endSession(); }
+      await releaseMonthlyListingQuota(quotaReservation);
       throw error;
     }
   }

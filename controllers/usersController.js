@@ -12,7 +12,9 @@ const {
 } = require('../factories');
 
 const {UsersModel} = require('../models');
-const {UsersServices, FileServices} = require('../services');
+const VehicleListingQuotaModel = require('../models/VehicleListingQuotaModel');
+const VehiclesModel = require('../models/VehiclesModel');
+const {UsersServices, FileServices, UserAccessService} = require('../services');
 
 const {jwtUtils, createOptions, getLocaleFromCookie} = require('../utils');
 
@@ -21,6 +23,25 @@ const {getCookieDomain} = require('../utils/urlUtils');
 const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const {LOCALES} = require('../constants/generalConstant');
 const { first } = require('lodash');
+
+const USER_ACTIVITY_ROLES = [
+  usersConstants.SYSTEM_ROLES.user.value,
+  usersConstants.SYSTEM_ROLES.dealer.value,
+];
+const MONTHLY_LISTING_LIMITS = {
+  [usersConstants.SYSTEM_ROLES.user.value]: {
+    premium: 1,
+    'quick sell': 1,
+    standard: 1,
+  },
+  [usersConstants.SYSTEM_ROLES.dealer.value]: {
+    premium: 2,
+    'quick sell': 3,
+    standard: 5,
+  },
+};
+const escapeRegex = (value = '') =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 module.exports = class UsersController {
   // =========================
@@ -378,8 +399,6 @@ module.exports = class UsersController {
     if (!userToLogin || !userToLogin.password)
       throw UsersErrorsFactory.wrongEmailOrPasswordErr();
 
-    if (userToLogin.isBlocked) throw UsersErrorsFactory.userBlockedErr();
-
     if (
       userToLogin.systemRole === 'dealer' &&
       userToLogin.dealerStatus !== usersConstants.DEALER_STATUS.approved.value
@@ -393,6 +412,9 @@ module.exports = class UsersController {
     });
 
     if (!isPasswordVerified) throw UsersErrorsFactory.wrongEmailOrPasswordErr();
+
+    if (userToLogin.isBlocked)
+      throw UsersErrorsFactory.userBlockedErr(userToLogin.blockReason);
 
     if (!userToLogin.isVerified) throw UsersErrorsFactory.userNotVerifiedErr();
 
@@ -581,6 +603,296 @@ module.exports = class UsersController {
     });
   }
 
+  static async getUserActivity(req, res) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+
+    const requestedPage = Number.parseInt(req.query.page, 10) || 1;
+    const requestedLimit = Number.parseInt(req.query.limit, 10) || 10;
+    const page = Math.max(requestedPage, 1);
+    const limit = Math.min(Math.max(requestedLimit, 1), 50);
+    const skip = (page - 1) * limit;
+    const role = USER_ACTIVITY_ROLES.includes(req.query.role)
+      ? req.query.role
+      : null;
+    const status = ['active', 'blocked'].includes(req.query.status)
+      ? req.query.status
+      : null;
+    const search = String(req.query.search || '').trim().slice(0, 100);
+    const now = new Date();
+    const periodStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+    );
+    const periodEnd = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
+    );
+    const period = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+
+    const match = {
+      systemRole: role || {$in: USER_ACTIVITY_ROLES},
+      deletedAt: null,
+    };
+
+    if (status) match.isBlocked = status === 'blocked';
+    if (search) {
+      const safeSearch = new RegExp(escapeRegex(search), 'i');
+      match.$or = [
+        {firstName: safeSearch},
+        {lastName: safeSearch},
+        {email: safeSearch},
+        {phoneNumber: safeSearch},
+        {showroomName: safeSearch},
+      ];
+    }
+
+    const activityPipeline = [
+      {$match: match},
+      {$sort: {updatedAt: -1, _id: -1}},
+      {$skip: skip},
+      {$limit: limit},
+      {
+        $lookup: {
+          from: VehiclesModel.collection.name,
+          let: {userId: '$_id'},
+          pipeline: [
+            {
+              $match: {
+                $expr: {$eq: ['$creatorId', '$$userId']},
+                createdAt: {$gte: periodStart, $lt: periodEnd},
+              },
+            },
+            {
+              $group: {
+                _id: '$listingType',
+                uploaded: {$sum: 1},
+                latestUploadAt: {$max: '$createdAt'},
+              },
+            },
+          ],
+          as: 'monthlyVehicleUsage',
+        },
+      },
+      {
+        $lookup: {
+          from: VehicleListingQuotaModel.collection.name,
+          let: {userId: '$_id'},
+          pipeline: [
+            {
+              $match: {
+                $expr: {$eq: ['$creatorId', '$$userId']},
+                period,
+              },
+            },
+            {$project: {_id: 0, listingType: 1, used: 1}},
+          ],
+          as: 'monthlyQuotaUsage',
+        },
+      },
+      {
+        $project: {
+          firstName: 1,
+          lastName: 1,
+          email: 1,
+          phoneNumber: 1,
+          city: 1,
+          showroomName: 1,
+          systemRole: 1,
+          dealerStatus: 1,
+          isBlocked: 1,
+          blockReason: 1,
+          blockedAt: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          monthlyVehicleUsage: 1,
+          monthlyQuotaUsage: 1,
+        },
+      },
+    ];
+
+    const [users, filteredCount, summaryRows] = await Promise.all([
+      UsersModel.aggregate(activityPipeline),
+      UsersModel.countDocuments(match),
+      UsersModel.aggregate([
+        {
+          $match: {
+            systemRole: {$in: USER_ACTIVITY_ROLES},
+            deletedAt: null,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: {$sum: 1},
+            users: {
+              $sum: {
+                $cond: [
+                  {$eq: ['$systemRole', usersConstants.SYSTEM_ROLES.user.value]},
+                  1,
+                  0,
+                ],
+              },
+            },
+            dealers: {
+              $sum: {
+                $cond: [
+                  {$eq: ['$systemRole', usersConstants.SYSTEM_ROLES.dealer.value]},
+                  1,
+                  0,
+                ],
+              },
+            },
+            blocked: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      '$isBlocked',
+                      {$eq: ['$systemRole', usersConstants.SYSTEM_ROLES.user.value]},
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ]),
+    ]);
+
+    const normalizedUsers = users.map((user) => {
+      const limits = MONTHLY_LISTING_LIMITS[user.systemRole];
+      const usage = Object.fromEntries(
+        user.monthlyVehicleUsage.map((item) => [item._id, item.uploaded])
+      );
+      const quotaUsage = Object.fromEntries(
+        user.monthlyQuotaUsage.map((item) => [item.listingType, item.used])
+      );
+      const latestUploadAt = user.monthlyVehicleUsage.reduce(
+        (latest, item) =>
+          !latest || item.latestUploadAt > latest ? item.latestUploadAt : latest,
+        null
+      );
+
+      return {
+        ...user,
+        lastActivityAt: latestUploadAt || user.updatedAt || user.createdAt,
+        vehicleUsage: Object.fromEntries(
+          Object.entries(limits).map(([listingType, listingLimit]) => {
+            const uploaded = Math.max(
+              usage[listingType] || 0,
+              quotaUsage[listingType] || 0
+            );
+            return [
+              listingType,
+              {
+                uploaded,
+                limit: listingLimit,
+                remaining: Math.max(listingLimit - uploaded, 0),
+              },
+            ];
+          })
+        ),
+        monthlyVehicleUsage: undefined,
+        monthlyQuotaUsage: undefined,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User activity fetched successfully',
+      data: {
+        users: normalizedUsers,
+        summary: summaryRows[0] || {total: 0, users: 0, dealers: 0, blocked: 0},
+        pagination: {
+          page,
+          limit,
+          total: filteredCount,
+          totalPages: Math.ceil(filteredCount / limit),
+        },
+        period,
+      },
+    });
+  }
+
+  static async updateUserActivityStatus(req, res) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+
+    const {action, blockReason} = req.body || {};
+    if (!['block', 'unblock', 'demote'].includes(action)) {
+      return res.status(400).json({success: false, message: 'Invalid action'});
+    }
+
+    const user = await UsersModel.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({success: false, message: 'User not found'});
+    }
+    if (user.systemRole === usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(400).json({success: false, message: 'Admin accounts cannot be modified here'});
+    }
+    if (
+      ['block', 'unblock'].includes(action) &&
+      user.systemRole !== usersConstants.SYSTEM_ROLES.user.value
+    ) {
+      return res.status(400).json({success: false, message: 'Only user accounts can be blocked or unblocked'});
+    }
+    if (
+      action === 'demote' &&
+      user.systemRole !== usersConstants.SYSTEM_ROLES.dealer.value
+    ) {
+      return res.status(400).json({success: false, message: 'Only dealer accounts can be demoted'});
+    }
+    if (
+      action === 'block' &&
+      (!blockReason || !String(blockReason).trim())
+    ) {
+      return res.status(400).json({success: false, message: 'Block reason is required'});
+    }
+
+    if (action === 'block') {
+      user.isBlocked = true;
+      user.blockReason = String(blockReason).trim().slice(0, 500);
+      user.blockedAt = new Date();
+      user.blockedBy = req?.jwtToken?.user?._id || req?.jwtToken?._id || null;
+    } else if (action === 'unblock') {
+      user.isBlocked = false;
+      user.blockReason = null;
+      user.blockedAt = null;
+      user.blockedBy = null;
+    } else {
+      user.systemRole = usersConstants.SYSTEM_ROLES.user.value;
+      user.dealerStatus = usersConstants.DEALER_STATUS.rejected.value;
+      user.rejected = true;
+      user.rejectReason = 'Dealer account demoted by admin';
+      user.dealerStatusHistory.push({
+        status: usersConstants.DEALER_STATUS.rejected.value,
+        reason: 'Dealer account demoted by admin',
+        updatedBy: req?.jwtToken?.user?._id || req?.jwtToken?._id || null,
+        updatedAt: new Date(),
+      });
+    }
+
+    await user.save();
+    UserAccessService.setAccountStatus({
+      userId: user._id,
+      isBlocked: user.isBlocked,
+      blockReason: user.blockReason,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        action === 'demote'
+          ? 'Dealer demoted successfully'
+          : `User ${action === 'block' ? 'blocked' : 'unblocked'} successfully`,
+    });
+  }
+
   static async getDealerById(req, res, next) {
     const loggedInRole = req?.jwtToken?.systemRole;
     if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
@@ -726,10 +1038,18 @@ module.exports = class UsersController {
     if (!user) throw UsersErrorsFactory.userNotFoundErr();
 
     user.isBlocked = true;
+    user.blockReason =
+      String(req.body?.blockReason || '').trim().slice(0, 500) ||
+      'Blocked by admin';
     user.blockedAt = new Date();
-    user.blockedBy = req.jwtToken.user._id;
+    user.blockedBy = req?.jwtToken?.user?._id || req?.jwtToken?._id || null;
 
     await user.save();
+    UserAccessService.setAccountStatus({
+      userId: user._id,
+      isBlocked: true,
+      blockReason: user.blockReason,
+    });
 
     next(UsersResponsesFactory.userUpdatedSuccessfully());
   }

@@ -6,6 +6,7 @@ const { setSocket } = require('./socketInstance');
 const { corsOrigins } = require('./utils');
 
 const Chat = require("./models/chatModel");
+const {UserAccessService} = require('./services');
 
 module.exports.prepare = ({ app }) => {
   const server = http.createServer(app);
@@ -26,6 +27,21 @@ module.exports.prepare = ({ app }) => {
 
   io.on("connection", (socket) => {
     const userId = socket.user._id.toString();
+    const ensureSocketAllowed = async () => {
+      const accountStatus = await UserAccessService.getAccountStatus({
+        userId,
+        force: true,
+      });
+      if (!accountStatus.exists || accountStatus.isBlocked) {
+        socket.emit('accountBlocked', {
+          reason: accountStatus.blockReason || 'Your account is blocked.',
+        });
+        socket.disconnect(true);
+        return false;
+      }
+
+      return true;
+    };
 
     // ✅ store user
     users[userId] = socket.id;
@@ -36,6 +52,7 @@ module.exports.prepare = ({ app }) => {
     /* ================= SEND MESSAGE ================= */
     socket.on("sendMessage", async ({ to, message }) => {
   try {
+    if (!(await ensureSocketAllowed())) return;
     const from = userId;
 
     await Chat.create({
@@ -72,6 +89,7 @@ module.exports.prepare = ({ app }) => {
     /* ================= MARK AS READ ================= */
    socket.on("markAsRead", async ({ from }) => {
   try {
+    if (!(await ensureSocketAllowed())) return;
     await Chat.updateMany(
       { from, to: userId, isRead: false },
       { isRead: true }

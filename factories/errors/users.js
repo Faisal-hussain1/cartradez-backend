@@ -98,14 +98,19 @@ static dealerRejectedErr() {
       },
     });
   }   
-  static userBlockedErr() {
+  static userBlockedErr(blockReason = null) {
+    const reason = String(blockReason || '').trim();
+
     return new AppError({
-      message: 'Your account has been blocked by admin',
+      message: reason
+        ? `Your account has been blocked by admin. Reason: ${reason}`
+        : 'Your account has been blocked by admin',
       statusCode: 403,
       error: {
         type: USER_ERRORS_TYPES.userBlocked
           ? USER_ERRORS_TYPES.userBlocked.value
           : 'userBlocked',
+        blockReason: reason || null,
       },
     });
   }
