@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const {hideTimestampsPlugin} = require('./plugins');
+const {hideTimestampsPlugin, softDeleteWithIndexesPlugin} = require('./plugins');
 
 const {
   VEHICLE_FUEL_TYPES_VALUES,
@@ -172,6 +172,7 @@ const vehiclesSchema = new Schema(
 
 // Use the hide timestamps plugin
 vehiclesSchema.plugin(hideTimestampsPlugin);
+vehiclesSchema.plugin(softDeleteWithIndexesPlugin);
 
 // Query/index optimizations for high-traffic listing endpoints
 vehiclesSchema.index({creatorId: 1, createdAt: -1});
@@ -179,5 +180,6 @@ vehiclesSchema.index({isManagedByCartradez: 1, createdAt: -1});
 vehiclesSchema.index({listingType: 1, createdAt: -1});
 vehiclesSchema.index({status: 1, createdAt: -1});
 vehiclesSchema.index({createdAt: -1});
+vehiclesSchema.index({deletedAt: -1, createdAt: -1});
 
 module.exports = mongoose.model('Vehicles', vehiclesSchema);

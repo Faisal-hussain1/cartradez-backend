@@ -27,7 +27,7 @@ const usersSchema = new Schema(
     },
     email: {
       type: String,
-      required: [true, 'User must have a email'],
+      required: [true, 'User must have an email'],
       minlength: 4,
       maxlength: 255,
     },

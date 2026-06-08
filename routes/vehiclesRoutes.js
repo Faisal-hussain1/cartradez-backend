@@ -25,6 +25,12 @@ const allowedRoles = accessMiddleware({
   }),
 });
 
+const adminOnly = accessMiddleware({
+  customFn: checkAllowedRoles({
+    allowedRoles: [SYSTEM_ROLES.admin.value],
+  }),
+});
+
 // ─── STATIC / SPECIFIC PATHS FIRST ──────────────────────────────────────────
 // IMPORTANT: Express matches routes top-to-bottom. All static segments (/add,
 // /cartradez, /user/:id) MUST come before the wildcard /:id routes, otherwise
@@ -66,6 +72,20 @@ router.get(
   '/user/:id',
   authMiddleware,
   catchAsync(VehiclesController.getAllVehiclesOfLoggedInUser)
+);
+
+router.get(
+  '/deleted',
+  authMiddleware,
+  adminOnly,
+  catchAsync(VehiclesController.getDeletedVehicles)
+);
+
+router.patch(
+  '/:id/restore',
+  authMiddleware,
+  adminOnly,
+  catchAsync(VehiclesController.restoreVehicle)
 );
 
 // ─── ROOT LIST ───────────────────────────────────────────────────────────────

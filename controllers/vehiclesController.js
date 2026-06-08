@@ -566,9 +566,6 @@ module.exports = class VehiclesController {
       return res.status(403).json({success: false, message: 'You are not authorized to delete this vehicle.'});
 
     let session;
-    const imageKeys = (existingVehicle.images || [])
-      .map((image) => image?.key)
-      .filter(Boolean);
     try {
       session = await mongoose.startSession();
       session.startTransaction();
@@ -577,23 +574,106 @@ module.exports = class VehiclesController {
       // then referenced undeclared `deleteErr` → ReferenceError crash.
       // Use GeneralServices.deleteOne so the session is passed and errors follow
       // the standard {error} pattern used everywhere else in this codebase.
-      const delVehicle=await VehiclesModel.findByIdAndDelete({_id: vehicleId}, {session});
-      if (!delVehicle) throw new Error('Vehicle deletion failed');
+      const {doc: deletedVehicle, error: deleteErr} =
+        await GeneralServices.findOneAndUpdate({
+          model: VehiclesModel,
+          query: {_id: vehicleId},
+          data: {
+            $set: {
+              deletedAt: new Date(),
+              deletedBy: resolveUserRole(loggedInUser),
+              deleteReason: req.body?.deleteReason?.trim() || null,
+            },
+          },
+          session,
+        });
+      if (deleteErr) throw deleteErr;
+      if (!deletedVehicle) throw new Error('Vehicle deletion failed');
 
       await session.commitTransaction();
       session.endSession();
 
       // Run Cloudinary cleanup outside request lifecycle so live delete responds fast.
       // Failures are logged but do not block user-facing deletion.
-      if (imageKeys.length > 0) {
-        Promise.allSettled(imageKeys.map((key) => FileServices.deleteFile({key}))).catch(() => {});
-      }
+      dashboardVehicleStatsCache = {expiresAt: 0, data: null};
 
       return res.status(200).json({statusCode: 200, message: 'Vehicle deleted successfully', success: true});
     } catch (error) {
       if (session) { await session.abortTransaction(); session.endSession(); }
       throw error;
     }
+  }
+
+  static async getDeletedVehicles(req, res, next) {
+    const requestedLimit = parseInt(req.query.limit, 10) || generalConstant.paginationDefaults.limit;
+    const limit = Math.min(requestedLimit, 50);
+    const page = parseInt(req.query.page, 10) || generalConstant.paginationDefaults.page;
+    const skip = (page - 1) * limit;
+    const search = req.query.search?.trim();
+    const listingType = req.query.listingType?.trim();
+    const query = {deletedAt: {$ne: null}};
+
+    if (listingType) query.listingType = listingType;
+    if (search) {
+      const keywords = search.split(/\s+/).filter(Boolean);
+      query.$and = keywords.map((word) => ({
+        $or: [
+          {make: {$regex: word, $options: 'i'}},
+          {model: {$regex: word, $options: 'i'}},
+          {variant: {$regex: word, $options: 'i'}},
+          {listingType: {$regex: word, $options: 'i'}},
+        ],
+      }));
+    }
+
+    const options = {includeDeleted: true};
+    const [countResult, docsResult] = await Promise.all([
+      GeneralServices.countDocuments({model: VehiclesModel, query, options}),
+      GeneralServices.find({
+        model: VehiclesModel,
+        query,
+        options: {
+          ...options,
+          queryProperties: {skip, limit, sort: {deletedAt: -1}},
+          fieldsInclusion: {
+            includeSpecificFields: [
+              '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt deletedAt deletedBy deleteReason',
+            ],
+          },
+        },
+      }),
+    ]);
+
+    if (countResult.error) throw countResult.error;
+    if (docsResult.error) throw docsResult.error;
+
+    return next(VehiclesResponsesFactory.vehiclesRetrievedSuccessfully({
+      vehicles: docsResult.docs,
+      count: countResult.count,
+      page,
+      limit,
+      totalPages: Math.ceil(countResult.count / limit),
+    }));
+  }
+
+  static async restoreVehicle(req, res, next) {
+    const {doc: restoredVehicle, error} = await GeneralServices.findOneAndUpdate({
+      model: VehiclesModel,
+      query: {_id: req.params.id, deletedAt: {$ne: null}},
+      data: {$set: {deletedAt: null, deletedBy: null, deleteReason: null}},
+      options: {includeDeleted: true},
+    });
+
+    if (error) throw error;
+    if (!restoredVehicle) return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
+    dashboardVehicleStatsCache = {expiresAt: 0, data: null};
+    return res.status(200).json({
+      statusCode: 200,
+      success: true,
+      message: 'Vehicle restored successfully',
+      vehicle: restoredVehicle,
+    });
   }
 
   static async getAllManagedByCartradezVehicles(req, res, next) {
