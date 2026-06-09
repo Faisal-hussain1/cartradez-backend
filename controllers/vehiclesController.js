@@ -639,7 +639,22 @@ module.exports = class VehiclesController {
           queryProperties: {skip, limit, sort: {updatedAt: -1}},
           fieldsInclusion: {
             includeSpecificFields: [
-              '_id make model year price currency coverImage listingType creatorId isManagedByCartradez status statusBeforeDelete createdAt updatedAt deletedBy deleteReason',
+              '_id',
+              'make',
+              'model',
+              'year',
+              'price',
+              'currency',
+              'coverImage',
+              'listingType',
+              'creatorId',
+              'isManagedByCartradez',
+              'status',
+              'statusBeforeDelete',
+              'createdAt',
+              'updatedAt',
+              'deletedBy',
+              'deleteReason',
             ],
           },
         },
@@ -692,6 +707,50 @@ module.exports = class VehiclesController {
       message: 'Vehicle restored successfully',
       vehicle: restoredVehicle,
     });
+  }
+
+  static async permanentlyDeleteVehicle(req, res, next) {
+    const {doc: deletedVehicle, error: findErr} = await GeneralServices.findOne({
+      model: VehiclesModel,
+      query: {_id: req.params.id, status: VEHICLE_STATUSES.deleted.value},
+      options: {includeDeleted: true},
+    });
+
+    if (findErr) throw findErr;
+    if (!deletedVehicle) return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
+    let session;
+    try {
+      session = await mongoose.startSession();
+      session.startTransaction();
+
+      // Hard delete the vehicle record
+      const {success, error} = await GeneralServices.findOneAndDelete({
+        model: VehiclesModel,
+        query: {_id: req.params.id, status: VEHICLE_STATUSES.deleted.value},
+        options: {includeDeleted: true, hardDelete: true},
+        session,
+      });
+
+      if (error) throw error;
+      if (!success) throw new AppError({message: 'Failed to permanently delete vehicle', statusCode: 500});
+
+      await session.commitTransaction();
+      session.endSession();
+
+      dashboardVehicleStatsCache = {expiresAt: 0, data: null};
+      return res.status(200).json({
+        statusCode: 200,
+        success: true,
+        message: 'Vehicle permanently deleted successfully',
+      });
+    } catch (error) {
+      if (session) {
+        await session.abortTransaction();
+        session.endSession();
+      }
+      throw error;
+    }
   }
 
   static async getAllManagedByCartradezVehicles(req, res, next) {
