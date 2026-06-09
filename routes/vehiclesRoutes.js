@@ -88,6 +88,13 @@ router.patch(
   catchAsync(VehiclesController.restoreVehicle)
 );
 
+router.delete(
+  '/:id/permanent',
+  authMiddleware,
+  adminOnly,
+  catchAsync(VehiclesController.permanentlyDeleteVehicle)
+);
+
 // ─── ROOT LIST ───────────────────────────────────────────────────────────────
 router.get('/', vehicleReadLimiter, catchAsync(VehiclesController.getAllVehicles));
 
