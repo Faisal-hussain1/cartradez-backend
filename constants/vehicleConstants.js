@@ -293,7 +293,8 @@ const VEHICLE_STATUSES = {
   active: {value: 'active'},
   sold: {value: 'sold'},
   draft:{value:'draft'},
-  rejected:{value:'rejected'}
+  rejected:{value:'rejected'},
+  deleted:{value:'deleted'}
 };
 
 const VEHICLE_STATUSES_VALUES = Object.values(VEHICLE_STATUSES).map(

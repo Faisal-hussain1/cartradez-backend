@@ -106,6 +106,8 @@ module.exports = class VehiclesController {
 
     const isAdminRole = resolveUserRole(loggedInUser) === SYSTEM_ROLES.admin.value;
     if (isAdminRole) data.isManagedByCartradez = true;
+    if (data.status === VEHICLE_STATUSES.deleted.value)
+      return res.status(400).json({success: false, message: 'Deleted status can only be set through the delete vehicle endpoint.'});
 
     let session, awsFileKeys = [], createdVehicleId, vehicleImages = [], quotaReservation;
 
@@ -449,6 +451,8 @@ module.exports = class VehiclesController {
 
     const setData = {};
     allowedFields.forEach((field) => { if (body[field] !== undefined) setData[field] = body[field]; });
+    if (setData.status === VEHICLE_STATUSES.deleted.value)
+      return res.status(400).json({success: false, message: 'Deleted status can only be set through the delete vehicle endpoint.'});
 
     if (!hasImageMutation && Object.keys(setData).length === 0)
       return res.status(400).json({success: false, message: 'No valid vehicle fields provided for update.'});
@@ -570,17 +574,15 @@ module.exports = class VehiclesController {
       session = await mongoose.startSession();
       session.startTransaction();
 
-      // FIX: previous code did `const del = await VehiclesModel.findByIdAndDelete(...)`
-      // then referenced undeclared `deleteErr` → ReferenceError crash.
-      // Use GeneralServices.deleteOne so the session is passed and errors follow
-      // the standard {error} pattern used everywhere else in this codebase.
+      // Keep the vehicle document and mark it deleted through its status.
       const {doc: deletedVehicle, error: deleteErr} =
         await GeneralServices.findOneAndUpdate({
           model: VehiclesModel,
           query: {_id: vehicleId},
           data: {
             $set: {
-              deletedAt: new Date(),
+              status: VEHICLE_STATUSES.deleted.value,
+              statusBeforeDelete: existingVehicle.status,
               deletedBy: resolveUserRole(loggedInUser),
               deleteReason: req.body?.deleteReason?.trim() || null,
             },
@@ -611,7 +613,7 @@ module.exports = class VehiclesController {
     const skip = (page - 1) * limit;
     const search = req.query.search?.trim();
     const listingType = req.query.listingType?.trim();
-    const query = {deletedAt: {$ne: null}};
+    const query = {status: VEHICLE_STATUSES.deleted.value};
 
     if (listingType) query.listingType = listingType;
     if (search) {
@@ -634,10 +636,10 @@ module.exports = class VehiclesController {
         query,
         options: {
           ...options,
-          queryProperties: {skip, limit, sort: {deletedAt: -1}},
+          queryProperties: {skip, limit, sort: {updatedAt: -1}},
           fieldsInclusion: {
             includeSpecificFields: [
-              '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt deletedAt deletedBy deleteReason',
+              '_id make model year price currency coverImage listingType creatorId isManagedByCartradez status statusBeforeDelete createdAt updatedAt deletedBy deleteReason',
             ],
           },
         },
@@ -657,10 +659,26 @@ module.exports = class VehiclesController {
   }
 
   static async restoreVehicle(req, res, next) {
+    const {doc: deletedVehicle, error: findErr} = await GeneralServices.findOne({
+      model: VehiclesModel,
+      query: {_id: req.params.id, status: VEHICLE_STATUSES.deleted.value},
+      options: {includeDeleted: true},
+    });
+
+    if (findErr) throw findErr;
+    if (!deletedVehicle) return next(VehiclesErrorsFactory.vehicleNotFoundErr());
+
     const {doc: restoredVehicle, error} = await GeneralServices.findOneAndUpdate({
       model: VehiclesModel,
-      query: {_id: req.params.id, deletedAt: {$ne: null}},
-      data: {$set: {deletedAt: null, deletedBy: null, deleteReason: null}},
+      query: {_id: req.params.id, status: VEHICLE_STATUSES.deleted.value},
+      data: {
+        $set: {
+          status: deletedVehicle.statusBeforeDelete || VEHICLE_STATUSES.draft.value,
+          statusBeforeDelete: null,
+          deletedBy: null,
+          deleteReason: null,
+        },
+      },
       options: {includeDeleted: true},
     });
 

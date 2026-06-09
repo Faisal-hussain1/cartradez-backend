@@ -90,6 +90,11 @@ const vehiclesSchema = new Schema(
       enum: VEHICLE_STATUSES_VALUES,
       default: VEHICLE_STATUSES.draft.value,
     },
+    statusBeforeDelete: {
+      type: String,
+      enum: VEHICLE_STATUSES_VALUES,
+      default: null,
+    },
     events: [
       {
         action: {
@@ -108,10 +113,6 @@ const vehiclesSchema = new Schema(
         },
       },
     ],
-    deletedAt: {
-      type: Date,
-      default: null,
-    },
     publishedAt:{
       type:Date,
       default:null
@@ -172,14 +173,17 @@ const vehiclesSchema = new Schema(
 
 // Use the hide timestamps plugin
 vehiclesSchema.plugin(hideTimestampsPlugin);
-vehiclesSchema.plugin(softDeleteWithIndexesPlugin);
+vehiclesSchema.plugin(softDeleteWithIndexesPlugin, {
+  softDeleteField: 'status',
+  activeFilter: {$ne: VEHICLE_STATUSES.deleted.value},
+});
 
 // Query/index optimizations for high-traffic listing endpoints
 vehiclesSchema.index({creatorId: 1, createdAt: -1});
 vehiclesSchema.index({isManagedByCartradez: 1, createdAt: -1});
 vehiclesSchema.index({listingType: 1, createdAt: -1});
 vehiclesSchema.index({status: 1, createdAt: -1});
+vehiclesSchema.index({status: 1, updatedAt: -1});
 vehiclesSchema.index({createdAt: -1});
-vehiclesSchema.index({deletedAt: -1, createdAt: -1});
 
 module.exports = mongoose.model('Vehicles', vehiclesSchema);
