@@ -31,7 +31,6 @@ module.exports = (data, req, res, next) => {
       statusCode,
       message: data.message || 'Internal server error',
       ...(data.body && {data: data.body}),
-      ...(data.error && {error: data.error}),
       ...(data.code && {code: data.code}),
     });
 };
