@@ -1151,13 +1151,17 @@ module.exports = class UsersController {
   // LOGOUT
   // =========================
   static async logout(req, res, next) {
-    const BASE_URL = process.env.FRONTEND_URL;
+    const BASE_URL = process.env.FRONTEND_URL || config.get('frontendURL');
     const cookieDomain = getCookieDomain({url: BASE_URL});
     const cookieName = getTokenHeaderName();
+    const cookieNames = ['x-auth-token', cookieName];
 
-    res.clearCookie(cookieName, {
-      domain: cookieDomain,
-      path: '/',
+    cookieNames.forEach((name) => {
+      res.clearCookie(name, {path: '/'});
+      res.clearCookie(name, {
+        domain: cookieDomain,
+        path: '/',
+      });
     });
 
     next(UsersResponsesFactory.logoutSuccessfully());
