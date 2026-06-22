@@ -124,7 +124,7 @@ module.exports.prepare = ({ app }) => {
 
   // ✅ start server
   if (config.get('env') !== config.get('envVariables.test')) {
-    const PORT = config.get('port') || 3001;
+    const PORT = config.get('port') || 5000;
 
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
