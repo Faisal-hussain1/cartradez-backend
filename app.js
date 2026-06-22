@@ -15,6 +15,7 @@ const {
   globalLimiter,
 } = require('./middleware');
 const {corsOrigins} = require('./utils');
+const {getTokenHeaderName} = require('./utils/getTokenHeaderUtils');
 
 const app = express();
 
@@ -37,7 +38,13 @@ app.use(express.json());
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cors({origin: true, credentials: true}));
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    exposedHeaders: ['x-auth-token', getTokenHeaderName()],
+  })
+);
 
 app.use(globalLimiter);
 v1.prepareV1Routes({app});
