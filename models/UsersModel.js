@@ -172,6 +172,11 @@ const usersSchema = new Schema(
       ref: 'Users',
       default: null,
     },
+    listingLimitOverrides: {
+      premium: {type: Number, min: 0, max: 100, default: null},
+      quickSell: {type: Number, min: 0, max: 100, default: null},
+      standard: {type: Number, min: 0, max: 100, default: null},
+    },
 
     // ===== EXISTING ORGANIZATION & PERMISSIONS =====
     organizations: [

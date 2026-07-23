@@ -22,24 +22,20 @@ const actions = require('../utils/actions');
 const {getCookieDomain} = require('../utils/urlUtils');
 const {getTokenHeaderName} = require('../utils/getTokenHeaderUtils');
 const {LOCALES} = require('../constants/generalConstant');
+const {
+  LISTING_TYPES,
+  LISTING_TYPE_STORAGE_KEYS,
+  MAX_MONTHLY_LISTING_LIMIT,
+  MONTHLY_LISTING_LIMITS,
+  getEffectiveListingLimits,
+  getOverrideValue,
+} = require('../constants/listingLimits');
 const { first } = require('lodash');
 
 const USER_ACTIVITY_ROLES = [
   usersConstants.SYSTEM_ROLES.user.value,
   usersConstants.SYSTEM_ROLES.dealer.value,
 ];
-const MONTHLY_LISTING_LIMITS = {
-  [usersConstants.SYSTEM_ROLES.user.value]: {
-    premium: 1,
-    'quick sell': 1,
-    standard: 1,
-  },
-  [usersConstants.SYSTEM_ROLES.dealer.value]: {
-    premium: 2,
-    'quick sell': 3,
-    standard: 5,
-  },
-};
 const escapeRegex = (value = '') =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -705,6 +701,7 @@ module.exports = class UsersController {
           blockedAt: 1,
           createdAt: 1,
           updatedAt: 1,
+          listingLimitOverrides: 1,
           monthlyVehicleUsage: 1,
           monthlyQuotaUsage: 1,
         },
@@ -763,7 +760,10 @@ module.exports = class UsersController {
     ]);
 
     const normalizedUsers = users.map((user) => {
-      const limits = MONTHLY_LISTING_LIMITS[user.systemRole];
+      const limits = getEffectiveListingLimits(
+        user.systemRole,
+        user.listingLimitOverrides
+      );
       const usage = Object.fromEntries(
         user.monthlyVehicleUsage.map((item) => [item._id, item.uploaded])
       );
@@ -794,6 +794,12 @@ module.exports = class UsersController {
               },
             ];
           })
+        ),
+        listingLimitOverrides: Object.fromEntries(
+          LISTING_TYPES.map((listingType) => [
+            listingType,
+            getOverrideValue(user.listingLimitOverrides, listingType),
+          ])
         ),
         monthlyVehicleUsage: undefined,
         monthlyQuotaUsage: undefined,
@@ -890,6 +896,80 @@ module.exports = class UsersController {
         action === 'demote'
           ? 'Dealer demoted successfully'
           : `User ${action === 'block' ? 'blocked' : 'unblocked'} successfully`,
+    });
+  }
+
+  static async updateUserListingLimits(req, res) {
+    const loggedInRole = req?.jwtToken?.systemRole;
+    if (loggedInRole !== usersConstants.SYSTEM_ROLES.admin.value) {
+      return res.status(403).json({success: false, message: 'Unauthorized'});
+    }
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(400).json({success: false, message: 'Invalid user ID'});
+    }
+
+    const requestedLimits = req.body?.limits;
+    if (
+      !requestedLimits ||
+      typeof requestedLimits !== 'object' ||
+      Array.isArray(requestedLimits)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Limits must be provided as an object.',
+      });
+    }
+
+    const providedTypes = Object.keys(requestedLimits);
+    if (
+      !providedTypes.length ||
+      providedTypes.some((listingType) => !LISTING_TYPES.includes(listingType))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only premium, quick sell, and standard limits are allowed.',
+      });
+    }
+
+    const user = await UsersModel.findById(req.params.id);
+    if (!user || !USER_ACTIVITY_ROLES.includes(user.systemRole)) {
+      return res.status(404).json({success: false, message: 'User not found'});
+    }
+
+    const defaults = MONTHLY_LISTING_LIMITS[user.systemRole];
+    for (const listingType of providedTypes) {
+      const value = requestedLimits[listingType];
+      if (value === null) continue;
+      if (
+        !Number.isInteger(value) ||
+        value < defaults[listingType] ||
+        value > MAX_MONTHLY_LISTING_LIMIT
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: `${listingType} must be a whole number from ${defaults[listingType]} to ${MAX_MONTHLY_LISTING_LIMIT}, or null to restore the default.`,
+        });
+      }
+    }
+
+    for (const listingType of providedTypes) {
+      const storageKey = LISTING_TYPE_STORAGE_KEYS[listingType];
+      user.set(
+        `listingLimitOverrides.${storageKey}`,
+        requestedLimits[listingType]
+      );
+    }
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Listing limits updated successfully',
+      data: {
+        limits: getEffectiveListingLimits(
+          user.systemRole,
+          user.listingLimitOverrides
+        ),
+      },
     });
   }
 

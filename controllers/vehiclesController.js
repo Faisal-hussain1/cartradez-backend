@@ -4,24 +4,16 @@ const {VehiclesResponsesFactory, VehiclesErrorsFactory} = require('../factories'
 const {FileServices, GeneralServices} = require('../services');
 const VehiclesModel = require('../models/VehiclesModel');
 const VehicleListingQuotaModel = require('../models/VehicleListingQuotaModel');
+const UsersModel = require('../models/UsersModel');
 const {getCurrentTimestamp} = require('../utils/dateUtils');
 const {VEHICLE_ACTIONS, VEHICLE_STATUSES} = require('../constants/vehicleConstants');
 const {SYSTEM_ROLES} = require('../constants/usersConstants');
+const {
+  getEffectiveListingLimits,
+} = require('../constants/listingLimits');
 const AppError = require('../factories/errors/AppError');
 
 const resolveUserRole = (user = {}) => user?.systemRole || user?.role;
-const MONTHLY_LISTING_LIMITS = {
-  [SYSTEM_ROLES.user.value]: {
-    premium: 1,
-    'quick sell': 1,
-    standard: 1,
-  },
-  [SYSTEM_ROLES.dealer.value]: {
-    premium: 2,
-    'quick sell': 3,
-    standard: 5,
-  },
-};
 const DASHBOARD_STATS_CACHE_TTL_MS = 60 * 1000;
 let dashboardVehicleStatsCache = {
   expiresAt: 0,
@@ -36,9 +28,20 @@ const getMonthlyDateRange = (date = new Date()) => ({
   end: new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1)),
 });
 
-const reserveMonthlyListingQuota = async ({creatorId, listingType, role}) => {
-  const limit = MONTHLY_LISTING_LIMITS[role]?.[listingType];
-  if (!limit) {
+const reserveMonthlyListingQuota = async ({creatorId, listingType}) => {
+  const user = await UsersModel.findById(creatorId)
+    .select('systemRole listingLimitOverrides')
+    .lean();
+  if (!user) {
+    throw new AppError({message: 'User not found.', statusCode: 404});
+  }
+
+  const limits = getEffectiveListingLimits(
+    resolveUserRole(user),
+    user.listingLimitOverrides
+  );
+  const limit = limits[listingType];
+  if (!Number.isInteger(limit)) {
     throw new AppError({
       message: 'Please select a valid listing type.',
       statusCode: 400,
@@ -123,7 +126,6 @@ module.exports = class VehiclesController {
         quotaReservation = await reserveMonthlyListingQuota({
           creatorId: loggedInUser._id,
           listingType: String(data.listingType || '').toLowerCase().trim(),
-          role: resolveUserRole(loggedInUser),
         });
       }
 

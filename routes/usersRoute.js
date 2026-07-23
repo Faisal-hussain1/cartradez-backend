@@ -165,6 +165,12 @@ router.patch(
   catchAsync(UsersController.updateUserActivityStatus)
 );
 
+router.patch(
+  '/activity/:id/listing-limits',
+  authMiddleware,
+  catchAsync(UsersController.updateUserListingLimits)
+);
+
 router.get(
   '/dealers',
   authMiddleware,
