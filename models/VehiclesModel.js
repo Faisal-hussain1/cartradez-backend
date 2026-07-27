@@ -22,9 +22,28 @@ const {
 const { SYSTEM_ROLES_VALUES } = require('../constants/usersConstants');
 
 const Schema = mongoose.Schema;
+const createVehicleSlug = (...parts) => {
+  return parts
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+};
 
 const vehiclesSchema = new Schema(
   {
+    slug: {
+  type: String,
+  trim: true,
+  lowercase: true,
+  unique: true,
+  sparse: true,
+},
     make: {type: String, required: true},
     model: {type: String, required: true},
     variant: {type: String, default:null},
@@ -170,7 +189,36 @@ const vehiclesSchema = new Schema(
     toObject: {virtuals: true},
   }
 );
+vehiclesSchema.pre('validate', async function () {
+  if (this.slug) return;
 
+  const baseSlug = createVehicleSlug(
+    this.year,
+    this.make,
+    this.model,
+    this.variant,
+    this.registrationCity
+  );
+
+  if (!baseSlug) {
+    throw new Error('Vehicle slug could not be generated.');
+  }
+
+  let finalSlug = baseSlug;
+  let duplicateNumber = 2;
+
+  while (
+    await this.constructor.exists({
+      slug: finalSlug,
+      _id: {$ne: this._id},
+    })
+  ) {
+    finalSlug = `${baseSlug}-${duplicateNumber}`;
+    duplicateNumber += 1;
+  }
+
+  this.slug = finalSlug;
+});
 // Use the hide timestamps plugin
 vehiclesSchema.plugin(hideTimestampsPlugin);
 vehiclesSchema.plugin(softDeleteWithIndexesPlugin, {

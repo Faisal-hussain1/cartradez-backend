@@ -265,6 +265,7 @@ module.exports = class VehiclesController {
     try {
       const projectionFields = {
         _id: 1,
+        slug: 1,
         make: 1,
         model: 1,
         year: 1,
@@ -301,7 +302,7 @@ module.exports = class VehiclesController {
           ])
         : VehiclesModel.find(
             query,
-            '_id make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
+            '_id slug make model year price currency coverImage listingType creatorId isManagedByCartradez createdAt',
           )
             .sort({createdAt: -1})
             .skip(skip)
@@ -366,7 +367,7 @@ module.exports = class VehiclesController {
             queryProperties: {skip, limit, sort: {createdAt: -1}},
             fieldsInclusion: {
               includeSpecificFields: [
-                '_id make model variant year price currency listingType coverImage creatorId createdAt mileage fuelType transmission bodyType color condition engineSize driveType description features status numberOfOwners registrationCity registrationYear registrationNumber',
+                '_id slug make model variant year price currency listingType coverImage creatorId createdAt mileage fuelType transmission bodyType color condition engineSize driveType description features status numberOfOwners registrationCity registrationYear registrationNumber',
               ],
             },
           },
@@ -386,14 +387,27 @@ module.exports = class VehiclesController {
   }
 
   static async getVehicle(req, res, next) {
-    const vehicleId = req.params.id;
-    const {doc: retrievedVehicle, error: gettingVehicleErr} = await GeneralServices.findOne({
+  const vehicleIdentifier = req.params.id;
+
+  const vehicleQuery = mongoose.Types.ObjectId.isValid(vehicleIdentifier)
+    ? {
+        $or: [
+          {_id: vehicleIdentifier},
+          {slug: vehicleIdentifier},
+        ],
+      }
+    : {
+        slug: vehicleIdentifier,
+      };
+
+  const {doc: retrievedVehicle, error: gettingVehicleErr} =
+    await GeneralServices.findOne({
       model: VehiclesModel,
-      query: {_id: vehicleId},
+      query: vehicleQuery,
       options: {
         fieldsInclusion: {
           includeSpecificFields: [
-            '_id make model variant year condition bodyType color mileage engineSize transmission fuelType driveType currency price registrationCity registrationYear registrationNumber numberOfOwners features description images coverImage listingType creatorId createdAt',
+            '_id slug make model variant year condition bodyType color mileage engineSize transmission fuelType driveType currency price registrationCity registrationYear registrationNumber numberOfOwners features description images coverImage listingType creatorId createdAt',
           ],
         },
         populateFields: [
@@ -777,7 +791,7 @@ module.exports = class VehiclesController {
           queryProperties: {skip, limit, sort: {createdAt: -1}},
           fieldsInclusion: {
             includeSpecificFields: [
-              '_id make model year price currency coverImage listingType',
+              '_id slug make model year price currency coverImage listingType',
             ],
           },
         },
