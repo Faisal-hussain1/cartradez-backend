@@ -49,9 +49,13 @@ const buildVerifyEmail = ({fullName, verifyUrl}) => {
             Please verify your account to unlock full access to buying, listing, and getting premium market insights.
           </p>
           <div style="border:1px solid #d9e2ef; border-radius:10px; background:#f8fbff; padding:18px 14px 14px 14px; margin:0 0 14px 0; text-align:center;">
-            <div style="width:34px; height:34px; border-radius:999px; margin:0 auto 10px auto; border:1px solid #d1d7ea; display:flex; align-items:center; justify-content:center; color:#1d4ed8; background:#ffffff; font-size:16px; font-weight:700;">
-              &#128737;
-            </div>
+            <table role="presentation" align="center" width="36" height="36" cellpadding="0" cellspacing="0" border="0" style="width:36px; height:36px; margin:0 auto 10px auto; border-collapse:separate;">
+              <tr>
+                <td align="center" valign="middle" width="34" height="34" style="width:34px; height:34px; padding:0; border:1px solid #d1d7ea; border-radius:999px; background:#ffffff; color:#1d4ed8; font-family:'Segoe UI Symbol','Arial Unicode MS',Arial,sans-serif; font-size:16px; font-weight:700; line-height:34px; text-align:center; vertical-align:middle;">
+                  &#128737;&#65038;
+                </td>
+              </tr>
+            </table>
             <div style="font-size:14px; font-weight:700; line-height:1.4; color:#111827; margin:0 0 8px 0;">
               Secure Your Account
             </div>
